@@ -2,7 +2,6 @@ import React from "react";
 import { studentDemoData } from "./data/studentDemoData.js";
 import { useAuth } from "./hooks/useAuth.js";
 import { useStudentSnapshot } from "./hooks/useStudentSnapshot.js";
-import { useStudentMastery } from "./hooks/useStudentMastery.js";
 
 import Header from "./components/Header.jsx";
 import DailyRings from "./components/DailyRings.jsx";
@@ -10,12 +9,18 @@ import TodayPlan from "./components/TodayPlan.jsx";
 import AppCard from "./components/AppCard.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
 import Insights from "./components/Insights.jsx";
-import StrandGarden from "./components/StrandGarden.jsx";
 import Login from "./components/Login.jsx";
 import AccountUnlinked from "./components/AccountUnlinked.jsx";
-import Pomodoro from "./components/Pomodoro.jsx";
 import Earnings from "./components/Earnings.jsx";
 import { useIncentives } from "./hooks/useIncentives.js";
+
+// Parked but kept in the repo — re-enable when ready:
+//   import StrandGarden from "./components/StrandGarden.jsx";
+//   import { useStudentMastery } from "./hooks/useStudentMastery.js";
+//   import Pomodoro from "./components/Pomodoro.jsx";
+// The Skill Garden section + Pomodoro card were pulled while the
+// daily-rings + earnings layout stabilized. The mastery endpoints
+// (in math-facts-trainer-react) keep working in the meantime.
 
 export default function App() {
   const { session, student, status, signOut, refresh: refreshAuth } = useAuth();
@@ -45,7 +50,6 @@ export default function App() {
 function SignedInDashboard({ student, signOut }) {
   const { weeklyHistory, leaderboard } = studentDemoData;
   const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot(student.id);
-  const { mastery } = useStudentMastery(student.id);
   const incentives = useIncentives(student.id);
 
   if (!apps) {
@@ -96,9 +100,9 @@ function SignedInDashboard({ student, signOut }) {
         <TodayPlan apps={apps} />
       </section>
 
-      {/* Am I on track today? + Pomodoro side by side */}
+      {/* Today's Goals + Earnings side by side */}
       <section className="section">
-        <div className="grid-rings-pomodoro">
+        <div className="grid-rings-earnings">
           <div>
             <h2 className="section-title">Today's Goals</h2>
             <div className="card">
@@ -106,8 +110,13 @@ function SignedInDashboard({ student, signOut }) {
             </div>
           </div>
           <div>
-            <h2 className="section-title">Focus Timer</h2>
-            <Pomodoro />
+            <h2 className="section-title">Earnings</h2>
+            <Earnings
+              data={incentives.data}
+              loading={incentives.loading}
+              error={incentives.error}
+              redeem={incentives.redeem}
+            />
           </div>
         </div>
       </section>
@@ -120,26 +129,6 @@ function SignedInDashboard({ student, signOut }) {
             <AppCard key={a.id} app={a} />
           ))}
         </div>
-      </section>
-
-      {/* Earnings — incentive balance + redemption flow */}
-      <section className="section">
-        <h2 className="section-title">Earnings</h2>
-        <Earnings
-          data={incentives.data}
-          loading={incentives.loading}
-          error={incentives.error}
-          redeem={incentives.redeem}
-        />
-      </section>
-
-      {/* Mastery garden — cumulative progress across subjects */}
-      <section className="section">
-        <h2 className="section-title">Skill Garden</h2>
-        <p className="section-sub">
-          What you've mastered over time, beyond today's goals.
-        </p>
-        <StrandGarden mastery={mastery} />
       </section>
 
       {/* Insights — behavioral warnings and "you're behind" copy */}

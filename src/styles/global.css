@@ -1047,9 +1047,9 @@ a { color: inherit; text-decoration: none; }
 
 .link-btn:hover { text-decoration: underline; }
 
-/* ---------- Rings + Pomodoro side-by-side layout ---------- */
+/* ---------- Rings + Earnings side-by-side layout ---------- */
 
-.grid-rings-pomodoro {
+.grid-rings-earnings {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
   gap: 24px;
@@ -1057,7 +1057,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 900px) {
-  .grid-rings-pomodoro { grid-template-columns: 1fr; }
+  .grid-rings-earnings { grid-template-columns: 1fr; }
 }
 
 /* ---------- Pomodoro ---------- */
@@ -1193,19 +1193,19 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-top: 4px;
-  color: var(--text);
+  /* Rich gold — matches the league-gold dot color elsewhere. */
+  color: #d4a017;
+  text-shadow: 0 1px 0 rgba(212, 160, 23, 0.12);
   line-height: 1;
 }
 
 .earnings-stats {
+  /* Container-aware: auto-wrap when the slot is narrow (e.g. when
+     Earnings sits in the right-hand 1fr column beside the rings). */
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
   margin-bottom: 14px;
-}
-
-@media (max-width: 600px) {
-  .earnings-stats { grid-template-columns: repeat(2, 1fr); }
 }
 
 .earnings-stat {
