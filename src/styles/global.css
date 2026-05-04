@@ -23,11 +23,12 @@
   --blue: #0071e3;
   --blue-soft: #e8f0fe;
 
-  /* Per-subject ring colors (muted, calm) */
-  --ring-math-academy: #0a84ff;
-  --ring-math-facts: #34c759;
-  --ring-reading-facts: #af52de;
-  --ring-reading-academy: #c7c7cc;
+  /* Per-subject ring colors. Matched to the math-facts /
+     reading-facts apps' bright palette so identity is shared. */
+  --ring-math-facts: #fa3e3e;       /* red — apps' Effort hue */
+  --ring-math-academy: #3bc1f3;     /* cyan — schema color for math_academy */
+  --ring-reading-facts: #9aff00;    /* lime — schema color for reading */
+  --ring-reading-academy: #9c6cff;  /* purple — locked-tier accent */
 
   --ring-track: #ececf0;
 
@@ -199,72 +200,125 @@ a { color: inherit; text-decoration: none; }
   to   { transform: rotate(360deg); }
 }
 
-/* ---------- Daily Rings (composite three-ring widget) ---------- */
-/* Mirrors the rings rendered inside math-facts and reading-facts so
-   the dashboard and the apps share an identity. */
+/* ---------- Daily Rings (one per app) ---------- */
+/* Bright stroke colors + soft-tinted tracks mirror the look of the
+   rings inside math-facts and reading-facts. */
 
-.daily-rings-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0 4px;
-  gap: 18px;
+.rings-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  padding: 4px 0;
 }
 
-.daily-rings-svg-wrap {
+@media (max-width: 700px) {
+  .rings-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ring-tile {
   position: relative;
-  width: 200px;
-  height: 200px;
-}
-
-.daily-rings-svg-wrap svg {
-  display: block;
-}
-
-.daily-rings-center {
-  position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  pointer-events: none;
+  text-align: center;
+  outline: none;
 }
 
-.daily-rings-xp {
-  font-size: 40px;
+.ring-tile.locked { opacity: 0.55; }
+
+.ring-svg { display: block; }
+
+.ring-percent {
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  fill: var(--text);
+}
+
+.ring-rest-text {
+  font-size: 28px;
+  font-weight: 600;
+  fill: var(--text-muted);
+}
+
+.ring-locked-text {
+  font-size: 11px;
+  fill: var(--text-subtle);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.ring-name {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text);
-  line-height: 1;
-}
-
-.daily-rings-sub {
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.daily-rings-legend {
-  display: flex;
-  gap: 22px;
-  font-size: 13px;
-  color: var(--text-muted);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.daily-rings-legend .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
 }
 
-.daily-rings-legend .dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
+.ring-name-lock { color: var(--text-subtle); }
+
+/* Hover / focus tooltip with detailed metrics */
+.ring-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  width: max-content;
+  min-width: 200px;
+  max-width: 240px;
+  padding: 10px 12px;
+  background: #1d1d1f;
+  color: white;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 10;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+
+.ring-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: #1d1d1f;
+}
+
+.ring-tile:hover .ring-tooltip,
+.ring-tile:focus-within .ring-tooltip,
+.ring-tile:focus .ring-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ring-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ring-tooltip-row.main {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.ring-tooltip-row .muted { color: rgba(255, 255, 255, 0.6); }
+
+.ring-tooltip-next {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  font-style: italic;
 }
 
 /* ---------- Today Plan ---------- */
