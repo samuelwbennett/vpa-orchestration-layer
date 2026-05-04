@@ -39,3 +39,29 @@ export async function fetchAllSnapshots({ signal } = {}) {
     })
     .filter(Boolean);
 }
+
+// Mastery rollup for the skill garden. Adapters that expose
+// fetchMastery() participate; the rest return empty strand arrays
+// (handled by the adapter's own missing-implementation path).
+//
+// Returns array of { id, name, strands: [...] } in the same display
+// order as fetchAllSnapshots.
+export async function fetchAllMastery({ signal } = {}) {
+  const results = await Promise.allSettled(
+    ADAPTERS.map(({ impl }) =>
+      typeof impl.fetchMastery === "function"
+        ? impl.fetchMastery({ signal })
+        : Promise.resolve({ strands: [] })
+    )
+  );
+
+  return results
+    .map((r, i) => {
+      if (r.status === "fulfilled") return r.value;
+      console.error(
+        `[orchestrator] ${ADAPTERS[i].key} mastery failed:`,
+        r.reason
+      );
+      return { id: ADAPTERS[i].key, name: ADAPTERS[i].key, strands: [], _degraded: true };
+    });
+}

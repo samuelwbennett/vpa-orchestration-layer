@@ -75,3 +75,30 @@ function deriveStatus(today, goal) {
   if (today > 0) return "in_progress";
   return "ready";
 }
+
+// Per-operation mastery for the dashboard's skill garden.
+//
+//   GET {baseUrl}/api/math-facts/mastery?student=<id>
+//   → { studentId, strands: [{ id, label, symbol, mastered, total, ... }] }
+const MASTERY_PATH = "/api/math-facts/mastery";
+
+export async function fetchMastery({ signal } = {}) {
+  const { baseUrl, studentId } = config.mathFacts;
+  const url = `${baseUrl}${MASTERY_PATH}?student=${encodeURIComponent(studentId)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      strands: Array.isArray(data?.strands) ? data.strands : [],
+    };
+  } catch (err) {
+    console.warn("[mathFacts] mastery endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      strands: [],
+      _degraded: true,
+    };
+  }
+}

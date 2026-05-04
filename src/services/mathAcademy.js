@@ -95,3 +95,34 @@ function deriveStatus(today, goal) {
   if (today > 0) return "in_progress";
   return "ready";
 }
+
+// Course-level mastery for the dashboard's skill garden. Math Academy
+// doesn't expose per-topic mastery via the partner API, so the proxy
+// returns a single strand representing the current course's overall
+// progress — letterGrade and xpRemaining are passed through too.
+//
+//   GET {apiBaseUrl}/api/math-academy/mastery?student=<id>
+//   → { studentId, strands: [{ id, label, symbol, mastered, total, grade, ... }] }
+const MASTERY_PATH = "/api/math-academy/mastery";
+
+export async function fetchMastery({ signal } = {}) {
+  const { apiBaseUrl, studentId } = config.mathAcademy;
+  const url = `${apiBaseUrl}${MASTERY_PATH}?student=${encodeURIComponent(studentId)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      strands: Array.isArray(data?.strands) ? data.strands : [],
+      _notLinked: !!data?._notLinked,
+    };
+  } catch (err) {
+    console.warn("[mathAcademy] mastery endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      strands: [],
+      _degraded: true,
+    };
+  }
+}

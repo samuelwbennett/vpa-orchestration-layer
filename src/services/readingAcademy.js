@@ -18,3 +18,14 @@ export async function fetchSnapshot() {
     nextLesson: null
   };
 }
+
+// Reading Academy is coming-soon — return an empty strand list so the
+// skill garden can render a locked tile.
+export async function fetchMastery() {
+  return {
+    id: APP_ID,
+    name: APP_NAME,
+    strands: [],
+    _comingSoon: true,
+  };
+}

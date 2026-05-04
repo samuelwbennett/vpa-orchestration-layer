@@ -1,6 +1,7 @@
 import React from "react";
 import { studentDemoData } from "./data/studentDemoData.js";
 import { useStudentSnapshot } from "./hooks/useStudentSnapshot.js";
+import { useStudentMastery } from "./hooks/useStudentMastery.js";
 
 import Header from "./components/Header.jsx";
 import DailyRings from "./components/DailyRings.jsx";
@@ -9,10 +10,12 @@ import AppCard from "./components/AppCard.jsx";
 import WeeklySummary from "./components/WeeklySummary.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
 import Insights from "./components/Insights.jsx";
+import StrandGarden from "./components/StrandGarden.jsx";
 
 export default function App() {
   const { studentName, weeklyHistory, leaderboard } = studentDemoData;
   const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot();
+  const { mastery } = useStudentMastery();
 
   // Until the first fetch lands, render a calm loading state.
   if (!apps) {
@@ -77,6 +80,15 @@ export default function App() {
             <AppCard key={a.id} app={a} />
           ))}
         </div>
+      </section>
+
+      {/* Mastery garden — cumulative progress across subjects */}
+      <section className="section">
+        <h2 className="section-title">Skill Garden</h2>
+        <p className="section-sub">
+          What you've mastered over time, beyond today's goals.
+        </p>
+        <StrandGarden mastery={mastery} />
       </section>
 
       {/* How am I doing this week? + Insights */}
