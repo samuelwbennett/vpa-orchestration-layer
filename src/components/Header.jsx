@@ -26,7 +26,6 @@ export default function Header({
       <div className="header-left">
         <div className="eyebrow">{today} · Today's Learning Plan</div>
         <h1>Good {greeting()}, {studentName}.</h1>
-        <div className="student">Here's what to focus on right now.</div>
       </div>
 
       <div className="header-right">

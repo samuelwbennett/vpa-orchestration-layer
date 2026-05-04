@@ -2,38 +2,34 @@ import React from "react";
 import { Lock } from "lucide-react";
 
 /**
- * DailyRings — one ring per app showing today's XP progress, in the
- * visual style of the math-facts / reading-facts apps:
- *   - bright stroke color
- *   - soft-tinted track underneath the progress arc
- *   - rounded stroke ends
+ * DailyRings — one ring per app showing today's XP toward the daily
+ * goal. Apple-aesthetic: iOS system colors, soft-tinted tracks behind
+ * the progress arc, rounded stroke ends, calm typography.
  *
- * Hover any ring for a detail tooltip with today XP / goal, weekly XP,
- * status, and the "next lesson" copy from each app's adapter. The
- * tooltip is also exposed via focus-within for keyboard users.
+ * Center of each ring shows TODAY'S XP as the headline number, with
+ * "of N XP" beneath it. Hover/focus reveals a tooltip with weekly XP,
+ * status, league info, and the next-lesson copy from each adapter.
  *
  * Props:
  *   apps: array of { id, name, dailyGoal, todayXP, weeklyXP, status,
  *                    nextLesson, league?, _notLinked? }
  */
 
-// Per-app colors — see also --ring-math-* CSS variables. We read
-// the variables here so theme changes only require touching CSS.
-const APP_COLOR_VARS = {
+// Ring stroke color is read from the CSS variable so theme changes
+// only require touching CSS. Track tint is computed from a hex copy
+// of the same hue (we can't `rgba()` a CSS var without color-mix).
+const APP_COLOR_VAR = {
   "math-facts":      "var(--ring-math-facts)",
   "math-academy":    "var(--ring-math-academy)",
   "reading-facts":   "var(--ring-reading-facts)",
   "reading-academy": "var(--ring-reading-academy)",
 };
 
-// Inline hex equivalents for the SVG track tint (we can't `rgba()`
-// a CSS var directly without color-mix support). Keep in sync with
-// the variable definitions above.
 const APP_COLOR_HEX = {
-  "math-facts":      "#fa3e3e",
-  "math-academy":    "#3bc1f3",
-  "reading-facts":   "#9aff00",
-  "reading-academy": "#9c6cff",
+  "math-facts":      "#ff453a",
+  "math-academy":    "#0a84ff",
+  "reading-facts":   "#30d158",
+  "reading-academy": "#bf5af2",
 };
 
 export default function DailyRings({ apps }) {
@@ -53,9 +49,8 @@ function Ring({ app }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Rest day: dailyGoal === 0 means there's nothing to fill toward
-  // (e.g. Math Academy on a Sunday). Render an empty-track ring with
-  // an em-dash inside; the tooltip explains via `nextLesson`.
+  // Rest day: dailyGoal === 0 (e.g. Math Academy on a configured rest
+  // day if that case ever sneaks through). Render a dash, no progress.
   const restDay = !locked && app.dailyGoal === 0;
 
   const pct = locked || restDay
@@ -63,45 +58,10 @@ function Ring({ app }) {
     : Math.max(0, Math.min(1, app.todayXP / app.dailyGoal));
   const offset = circumference * (1 - pct);
 
-  const stroke1 = APP_COLOR_VARS[app.id] || "var(--blue)";
+  const strokeColor = APP_COLOR_VAR[app.id] || "var(--blue)";
   const trackColor = locked
     ? "var(--ring-track)"
-    : hexToRgba(APP_COLOR_HEX[app.id] || "#3bc1f3", 0.18);
-
-  // Center label: percent for normal apps, em-dash on rest days,
-  // "LOCKED" for coming_soon.
-  let centerEl;
-  if (locked) {
-    centerEl = (
-      <text
-        className="ring-locked-text"
-        x="50%" y="50%"
-        dominantBaseline="middle" textAnchor="middle"
-      >
-        LOCKED
-      </text>
-    );
-  } else if (restDay) {
-    centerEl = (
-      <text
-        className="ring-rest-text"
-        x="50%" y="50%"
-        dominantBaseline="middle" textAnchor="middle"
-      >
-        —
-      </text>
-    );
-  } else {
-    centerEl = (
-      <text
-        className="ring-percent"
-        x="50%" y="50%"
-        dominantBaseline="middle" textAnchor="middle"
-      >
-        {Math.round(pct * 100)}%
-      </text>
-    );
-  }
+    : hexToRgba(APP_COLOR_HEX[app.id] || "#0a84ff", 0.18);
 
   return (
     <div
@@ -109,29 +69,46 @@ function Ring({ app }) {
       tabIndex={locked ? -1 : 0}
       aria-label={ariaSummary(app, pct, restDay)}
     >
-      <svg
-        className="ring-svg"
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-      >
-        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke={trackColor} strokeWidth={stroke}
-          />
-          {!locked && !restDay && (
+      <div className="ring-svg-wrap" style={{ width: size, height: size }}>
+        <svg
+          className="ring-svg"
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+        >
+          <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
             <circle
               cx={size / 2} cy={size / 2} r={radius}
-              fill="none" stroke={stroke1} strokeWidth={stroke}
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
+              fill="none" stroke={trackColor} strokeWidth={stroke}
             />
+            {!locked && !restDay && (
+              <circle
+                cx={size / 2} cy={size / 2} r={radius}
+                fill="none" stroke={strokeColor} strokeWidth={stroke}
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+              />
+            )}
+          </g>
+        </svg>
+
+        <div className="ring-center">
+          {locked ? (
+            <div className="ring-center-locked">LOCKED</div>
+          ) : restDay ? (
+            <>
+              <div className="ring-xp">—</div>
+              <div className="ring-xp-sub">Rest day</div>
+            </>
+          ) : (
+            <>
+              <div className="ring-xp">{app.todayXP}</div>
+              <div className="ring-xp-sub">of {app.dailyGoal} XP</div>
+            </>
           )}
-        </g>
-        {centerEl}
-      </svg>
+        </div>
+      </div>
 
       <div className="ring-name">
         {locked && <Lock size={12} className="ring-name-lock" />}
@@ -154,7 +131,7 @@ function RingTooltip({ app, pct, restDay }) {
       <div className="ring-tooltip-row">
         <span className="muted">Today</span>
         <span>
-          {app.todayXP} {app.dailyGoal > 0 ? `/ ${app.dailyGoal}` : ""} XP
+          {app.todayXP}{app.dailyGoal > 0 ? ` / ${app.dailyGoal}` : ""} XP
         </span>
       </div>
       <div className="ring-tooltip-row">
@@ -187,7 +164,7 @@ function statusText(s) {
 
 function ariaSummary(app, pct, restDay) {
   if (restDay) return `${app.name}: rest day`;
-  return `${app.name}: ${Math.round(pct * 100)} percent of today's goal, ${app.todayXP} of ${app.dailyGoal} XP`;
+  return `${app.name}: ${app.todayXP} of ${app.dailyGoal} XP, ${Math.round(pct * 100)} percent`;
 }
 
 function hexToRgba(hex, alpha) {

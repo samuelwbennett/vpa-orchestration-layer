@@ -31,7 +31,10 @@ export const config = {
       env.VITE_MA_DEEP_LINK || "https://www.mathacademy.com",
     studentId:
       env.VITE_MA_STUDENT_ID || env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6",
-    dailyGoalFallback: 40
+    // VPA's target for Math Academy is 30 XP/day, regardless of
+    // what's set inside Math Academy itself. The adapter pins this
+    // value rather than reading dailyGoalXp from the proxy.
+    dailyGoalFallback: 30
   },
 
   // ----- Math Facts (in-house, hosted on Vercel) -----
@@ -42,7 +45,7 @@ export const config = {
     // Backend contract — see services/mathFacts.js for the response shape.
     snapshotPath: env.VITE_MF_SNAPSHOT_PATH || "/api/snapshot",
     studentId: env.VITE_MF_STUDENT_ID || env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6",
-    dailyGoalFallback: 30
+    dailyGoalFallback: 5
   },
 
   // ----- Reading Facts (in-house, hosted on Vercel) -----
@@ -52,7 +55,7 @@ export const config = {
       env.VITE_RF_BASE_URL || "https://reading-facts-app.vercel.app",
     snapshotPath: env.VITE_RF_SNAPSHOT_PATH || "/api/snapshot",
     studentId: env.VITE_RF_STUDENT_ID || env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6",
-    dailyGoalFallback: 30
+    dailyGoalFallback: 5
   },
 
   // ----- Polling -----

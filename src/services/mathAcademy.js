@@ -52,7 +52,10 @@ export async function fetchSnapshot({ signal } = {}) {
 
   try {
     const data = await getJSON(url, { signal });
-    const dailyGoal = Math.round(data.dailyGoalXp ?? dailyGoalFallback);
+    // VPA pins the Math Academy daily goal to 30 XP regardless of
+    // what's configured inside Math Academy's own per-weekday
+    // schedule. Ignore data.dailyGoalXp on purpose.
+    const dailyGoal = dailyGoalFallback;
     const todayXP = Math.round(data.todayXp ?? 0);
 
     return {

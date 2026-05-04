@@ -7,7 +7,6 @@ import Header from "./components/Header.jsx";
 import DailyRings from "./components/DailyRings.jsx";
 import TodayPlan from "./components/TodayPlan.jsx";
 import AppCard from "./components/AppCard.jsx";
-import WeeklySummary from "./components/WeeklySummary.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
 import Insights from "./components/Insights.jsx";
 import StrandGarden from "./components/StrandGarden.jsx";
@@ -91,12 +90,9 @@ export default function App() {
         <StrandGarden mastery={mastery} />
       </section>
 
-      {/* How am I doing this week? + Insights */}
+      {/* Insights — behavioral warnings and "you're behind" copy */}
       <section className="section">
-        <div className="grid-2">
-          <WeeklySummary apps={apps} weeklyHistory={weeklyHistory} />
-          <Insights apps={apps} weeklyHistory={weeklyHistory} />
-        </div>
+        <Insights apps={apps} weeklyHistory={weeklyHistory} />
       </section>
 
       {/* Subtle leaderboard, last */}
