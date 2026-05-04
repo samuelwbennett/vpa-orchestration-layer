@@ -1,24 +1,22 @@
 // =====================================================
-// useStudentMastery
+// useIncentives
 // -----------------------------------------------------
-// React hook for the skill-garden view. Fetches per-app strand
-// rollups on mount and on demand. Polls less often than the
-// snapshot hook (mastery changes slowly, polling-heavy queries
-// hit Supabase + the MA partner API harder).
+// Owns the incentives data lifecycle for the signed-in student.
+//   - fetches on mount + when studentId changes
+//   - polls every 5 minutes (earnings change with daily_progress,
+//     which itself updates whenever a session completes)
+//   - exposes `redeem()` that posts to the proxy and refreshes
 // =====================================================
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchAllMastery } from "../services/orchestrator.js";
+import { fetchIncentives, postRedemption } from "../services/incentives.js";
 
-// Mastery refreshes every 5 minutes by default. The dashboard's
-// snapshot hook continues to poll at config.pollIntervalMs.
-const MASTERY_POLL_MS = 5 * 60 * 1000;
+const POLL_MS = 5 * 60 * 1000;
 
-export function useStudentMastery(studentId) {
-  const [mastery, setMastery] = useState(null);
+export function useIncentives(studentId) {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
   const abortRef = useRef(null);
 
@@ -30,11 +28,10 @@ export function useStudentMastery(studentId) {
 
     setLoading(true);
     try {
-      const next = await fetchAllMastery({ signal: controller.signal, studentId });
+      const next = await fetchIncentives({ signal: controller.signal, studentId });
       if (controller.signal.aborted) return;
-      setMastery(next);
+      setData(next);
       setError(null);
-      setLastUpdated(new Date());
     } catch (e) {
       if (e.name !== "AbortError") setError(e);
     } finally {
@@ -45,12 +42,24 @@ export function useStudentMastery(studentId) {
   useEffect(() => {
     if (!studentId) return;
     refresh();
-    const id = setInterval(refresh, MASTERY_POLL_MS);
+    const id = setInterval(refresh, POLL_MS);
     return () => {
       clearInterval(id);
       if (abortRef.current) abortRef.current.abort();
     };
   }, [studentId, refresh]);
 
-  return { mastery, loading, error, lastUpdated, refresh };
+  const redeem = useCallback(async ({ totalDollars, storeAmount, scholarshipAmount, note }) => {
+    const result = await postRedemption({
+      studentId,
+      totalDollars,
+      storeAmount,
+      scholarshipAmount,
+      note,
+    });
+    await refresh();
+    return result;
+  }, [studentId, refresh]);
+
+  return { data, loading, error, refresh, redeem };
 }

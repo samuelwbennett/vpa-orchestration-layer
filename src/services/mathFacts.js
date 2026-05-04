@@ -31,9 +31,10 @@ import { getJSON } from "./apiClient.js";
 const APP_ID = "math-facts";
 const APP_NAME = "Math Facts";
 
-export async function fetchSnapshot({ signal } = {}) {
-  const { baseUrl, snapshotPath, studentId, dailyGoalFallback } = config.mathFacts;
-  const url = `${baseUrl}${snapshotPath}?student=${encodeURIComponent(studentId)}`;
+export async function fetchSnapshot({ signal, studentId } = {}) {
+  const { baseUrl, snapshotPath, dailyGoalFallback } = config.mathFacts;
+  const sid = studentId || config.mathFacts.studentId;
+  const url = `${baseUrl}${snapshotPath}?student=${encodeURIComponent(sid)}`;
 
   try {
     const data = await getJSON(url, { signal });
@@ -82,9 +83,10 @@ function deriveStatus(today, goal) {
 //   → { studentId, strands: [{ id, label, symbol, mastered, total, ... }] }
 const MASTERY_PATH = "/api/math-facts/mastery";
 
-export async function fetchMastery({ signal } = {}) {
-  const { baseUrl, studentId } = config.mathFacts;
-  const url = `${baseUrl}${MASTERY_PATH}?student=${encodeURIComponent(studentId)}`;
+export async function fetchMastery({ signal, studentId } = {}) {
+  const { baseUrl } = config.mathFacts;
+  const sid = studentId || config.mathFacts.studentId;
+  const url = `${baseUrl}${MASTERY_PATH}?student=${encodeURIComponent(sid)}`;
   try {
     const data = await getJSON(url, { signal });
     return {

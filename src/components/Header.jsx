@@ -1,11 +1,11 @@
 import React from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, LogOut } from "lucide-react";
 
 /**
  * Header
  *  - Eyebrow: today's date + "Today's Learning Plan"
  *  - Title: greeting w/ student name
- *  - Right: On-Track pill + "last updated" + refresh button
+ *  - Right: On-Track pill + "last updated" + refresh + sign-out
  */
 export default function Header({
   studentName,
@@ -13,7 +13,8 @@ export default function Header({
   onTrackLabel,
   lastUpdated,
   onRefresh,
-  refreshing
+  refreshing,
+  onSignOut,
 }) {
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
@@ -46,6 +47,17 @@ export default function Header({
           />
           {lastUpdated ? `Updated ${formatAgo(lastUpdated)}` : "Refresh"}
         </button>
+
+        {onSignOut && (
+          <button
+            className="refresh-btn"
+            onClick={onSignOut}
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            <LogOut size={13} />
+          </button>
+        )}
       </div>
     </header>
   );

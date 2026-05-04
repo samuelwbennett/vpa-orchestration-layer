@@ -23,9 +23,9 @@ const ADAPTERS = [
   { key: "reading-academy", impl: readingAcademy }
 ];
 
-export async function fetchAllSnapshots({ signal } = {}) {
+export async function fetchAllSnapshots({ signal, studentId } = {}) {
   const results = await Promise.allSettled(
-    ADAPTERS.map(({ impl }) => impl.fetchSnapshot({ signal }))
+    ADAPTERS.map(({ impl }) => impl.fetchSnapshot({ signal, studentId }))
   );
 
   return results
@@ -46,11 +46,11 @@ export async function fetchAllSnapshots({ signal } = {}) {
 //
 // Returns array of { id, name, strands: [...] } in the same display
 // order as fetchAllSnapshots.
-export async function fetchAllMastery({ signal } = {}) {
+export async function fetchAllMastery({ signal, studentId } = {}) {
   const results = await Promise.allSettled(
     ADAPTERS.map(({ impl }) =>
       typeof impl.fetchMastery === "function"
-        ? impl.fetchMastery({ signal })
+        ? impl.fetchMastery({ signal, studentId })
         : Promise.resolve({ strands: [] })
     )
   );

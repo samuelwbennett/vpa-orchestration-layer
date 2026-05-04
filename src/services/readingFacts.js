@@ -31,9 +31,10 @@ import { getJSON } from "./apiClient.js";
 const APP_ID = "reading-facts";
 const APP_NAME = "Reading Facts";
 
-export async function fetchSnapshot({ signal } = {}) {
-  const { baseUrl, snapshotPath, studentId, dailyGoalFallback } = config.readingFacts;
-  const url = `${baseUrl}${snapshotPath}?student=${encodeURIComponent(studentId)}`;
+export async function fetchSnapshot({ signal, studentId } = {}) {
+  const { baseUrl, snapshotPath, dailyGoalFallback } = config.readingFacts;
+  const sid = studentId || config.readingFacts.studentId;
+  const url = `${baseUrl}${snapshotPath}?student=${encodeURIComponent(sid)}`;
 
   try {
     const data = await getJSON(url, { signal });
@@ -87,9 +88,10 @@ function deriveStatus(today, goal) {
 // UI can render a quiet placeholder.
 const MASTERY_PATH = "/api/mastery";
 
-export async function fetchMastery({ signal } = {}) {
-  const { baseUrl, studentId } = config.readingFacts;
-  const url = `${baseUrl}${MASTERY_PATH}?student=${encodeURIComponent(studentId)}`;
+export async function fetchMastery({ signal, studentId } = {}) {
+  const { baseUrl } = config.readingFacts;
+  const sid = studentId || config.readingFacts.studentId;
+  const url = `${baseUrl}${MASTERY_PATH}?student=${encodeURIComponent(sid)}`;
   try {
     const data = await getJSON(url, { signal });
     return {

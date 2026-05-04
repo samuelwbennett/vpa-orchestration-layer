@@ -1,5 +1,6 @@
 import React from "react";
 import { studentDemoData } from "./data/studentDemoData.js";
+import { useAuth } from "./hooks/useAuth.js";
 import { useStudentSnapshot } from "./hooks/useStudentSnapshot.js";
 import { useStudentMastery } from "./hooks/useStudentMastery.js";
 
@@ -10,22 +11,53 @@ import AppCard from "./components/AppCard.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
 import Insights from "./components/Insights.jsx";
 import StrandGarden from "./components/StrandGarden.jsx";
+import Login from "./components/Login.jsx";
+import AccountUnlinked from "./components/AccountUnlinked.jsx";
+import Pomodoro from "./components/Pomodoro.jsx";
+import Earnings from "./components/Earnings.jsx";
+import { useIncentives } from "./hooks/useIncentives.js";
 
 export default function App() {
-  const { studentName, weeklyHistory, leaderboard } = studentDemoData;
-  const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot();
-  const { mastery } = useStudentMastery();
+  const { session, student, status, signOut, refresh: refreshAuth } = useAuth();
 
-  // Until the first fetch lands, render a calm loading state.
+  // ---- Auth gates ----
+  if (status === "loading") {
+    return <FullScreenMessage>Loading…</FullScreenMessage>;
+  }
+  if (status === "anonymous") {
+    return <Login />;
+  }
+  if (status === "unlinked") {
+    return (
+      <AccountUnlinked
+        email={session?.user?.email}
+        onRefresh={refreshAuth}
+      />
+    );
+  }
+
+  return <SignedInDashboard student={student} signOut={signOut} />;
+}
+
+// The actual dashboard, only rendered after we have a linked student.
+// Pulling this out lets the data hooks (which take student.id) live
+// inside a component that's guaranteed to have a student in hand.
+function SignedInDashboard({ student, signOut }) {
+  const { weeklyHistory, leaderboard } = studentDemoData;
+  const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot(student.id);
+  const { mastery } = useStudentMastery(student.id);
+  const incentives = useIncentives(student.id);
+
   if (!apps) {
     return (
       <div className="app-shell">
         <Header
-          studentName={studentName}
+          studentName={student.display_name}
           onTrackStatus="yellow"
           onTrackLabel="Loading…"
           lastUpdated={null}
           onRefresh={refresh}
+          onSignOut={signOut}
           refreshing={loading}
         />
         <div className="section">
@@ -37,16 +69,17 @@ export default function App() {
     );
   }
 
-  const { status, label } = computeOnTrack(apps);
+  const { status: trackStatus, label: trackLabel } = computeOnTrack(apps);
 
   return (
     <div className="app-shell">
       <Header
-        studentName={studentName}
-        onTrackStatus={status}
-        onTrackLabel={label}
+        studentName={student.display_name}
+        onTrackStatus={trackStatus}
+        onTrackLabel={trackLabel}
         lastUpdated={lastUpdated}
         onRefresh={refresh}
+        onSignOut={signOut}
         refreshing={loading}
       />
 
@@ -63,11 +96,19 @@ export default function App() {
         <TodayPlan apps={apps} />
       </section>
 
-      {/* Am I on track today? */}
+      {/* Am I on track today? + Pomodoro side by side */}
       <section className="section">
-        <h2 className="section-title">Today's Goals</h2>
-        <div className="card">
-          <DailyRings apps={apps} />
+        <div className="grid-rings-pomodoro">
+          <div>
+            <h2 className="section-title">Today's Goals</h2>
+            <div className="card">
+              <DailyRings apps={apps} />
+            </div>
+          </div>
+          <div>
+            <h2 className="section-title">Focus Timer</h2>
+            <Pomodoro />
+          </div>
         </div>
       </section>
 
@@ -79,6 +120,17 @@ export default function App() {
             <AppCard key={a.id} app={a} />
           ))}
         </div>
+      </section>
+
+      {/* Earnings — incentive balance + redemption flow */}
+      <section className="section">
+        <h2 className="section-title">Earnings</h2>
+        <Earnings
+          data={incentives.data}
+          loading={incentives.loading}
+          error={incentives.error}
+          redeem={incentives.redeem}
+        />
       </section>
 
       {/* Mastery garden — cumulative progress across subjects */}
@@ -99,6 +151,17 @@ export default function App() {
       <section className="section">
         <Leaderboard leaderboard={leaderboard} />
       </section>
+    </div>
+  );
+}
+
+function FullScreenMessage({ children }) {
+  return (
+    <div className="login-shell">
+      <div className="login-card" style={{ textAlign: "center" }}>
+        <div className="brand-mark">VPA</div>
+        <p className="login-sub">{children}</p>
+      </div>
     </div>
   );
 }
