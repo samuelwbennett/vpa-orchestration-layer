@@ -58,6 +58,19 @@ export const config = {
     dailyGoalFallback: 5
   },
 
+  // ----- Reading Academy (in-house adaptive curriculum) -----
+  // Same proxy + deep-link domain (the SPA serves the deep links
+  // itself), so apiBaseUrl == deepLinkBaseUrl.
+  readingAcademy: {
+    enabled: true,
+    baseUrl:
+      env.VITE_RA_BASE_URL || "https://reading-academy.vercel.app",
+    snapshotPath: env.VITE_RA_SNAPSHOT_PATH || "/api/snapshot",
+    studentId:
+      env.VITE_RA_STUDENT_ID || env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6",
+    dailyGoalFallback: 30
+  },
+
   // ----- Polling -----
   pollIntervalMs: Number(env.VITE_POLL_INTERVAL_MS) || 60_000
 };
