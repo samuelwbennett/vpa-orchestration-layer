@@ -6,8 +6,6 @@ import { useStudentSnapshot } from "./hooks/useStudentSnapshot.js";
 import Header from "./components/Header.jsx";
 import DailyRings from "./components/DailyRings.jsx";
 import TodayPlan from "./components/TodayPlan.jsx";
-import AppCard from "./components/AppCard.jsx";
-import Leaderboard from "./components/Leaderboard.jsx";
 import Insights from "./components/Insights.jsx";
 import Login from "./components/Login.jsx";
 import AccountUnlinked from "./components/AccountUnlinked.jsx";
@@ -18,9 +16,11 @@ import { useIncentives } from "./hooks/useIncentives.js";
 //   import StrandGarden from "./components/StrandGarden.jsx";
 //   import { useStudentMastery } from "./hooks/useStudentMastery.js";
 //   import Pomodoro from "./components/Pomodoro.jsx";
-// The Skill Garden section + Pomodoro card were pulled while the
-// daily-rings + earnings layout stabilized. The mastery endpoints
-// (in math-facts-trainer-react) keep working in the meantime.
+//   import AppCard from "./components/AppCard.jsx";
+//   import Leaderboard from "./components/Leaderboard.jsx";
+// Pulled to keep the dashboard simple — the rings themselves now
+// double as launch buttons (click any ring to open the app), so
+// AppCard is redundant. Leaderboard was demo-only data.
 
 export default function App() {
   const { session, student, status, signOut, refresh: refreshAuth } = useAuth();
@@ -48,7 +48,7 @@ export default function App() {
 // Pulling this out lets the data hooks (which take student.id) live
 // inside a component that's guaranteed to have a student in hand.
 function SignedInDashboard({ student, signOut }) {
-  const { weeklyHistory, leaderboard } = studentDemoData;
+  const { weeklyHistory } = studentDemoData;
   const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot(student.id);
   const incentives = useIncentives(student.id);
 
@@ -121,24 +121,9 @@ function SignedInDashboard({ student, signOut }) {
         </div>
       </section>
 
-      {/* App cards */}
-      <section className="section">
-        <h2 className="section-title">Your Apps</h2>
-        <div className="grid-apps">
-          {apps.map((a) => (
-            <AppCard key={a.id} app={a} />
-          ))}
-        </div>
-      </section>
-
       {/* Insights — behavioral warnings and "you're behind" copy */}
       <section className="section">
         <Insights apps={apps} weeklyHistory={weeklyHistory} />
-      </section>
-
-      {/* Subtle leaderboard, last */}
-      <section className="section">
-        <Leaderboard leaderboard={leaderboard} />
       </section>
     </div>
   );

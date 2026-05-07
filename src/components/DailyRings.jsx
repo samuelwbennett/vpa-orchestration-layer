@@ -1,5 +1,6 @@
 import React from "react";
 import { Lock } from "lucide-react";
+import { launchApp } from "../utils/launch.js";
 
 /**
  * DailyRings — one ring per app showing today's XP toward the daily
@@ -63,10 +64,28 @@ function Ring({ app }) {
     ? "var(--ring-track)"
     : hexToRgba(APP_COLOR_HEX[app.id] || "#0a84ff", 0.18);
 
+  // Whole tile launches the app on click / Enter / Space when not
+  // locked. Keep the existing tabIndex + aria-label so screen readers
+  // and keyboard users still get the hover tooltip semantics.
+  const handleLaunch = () => {
+    if (locked || !app.link) return;
+    launchApp(app.link);
+  };
+  const handleKeyDown = (e) => {
+    if (locked) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleLaunch();
+    }
+  };
+
   return (
     <div
-      className={`ring-tile ${locked ? "locked" : ""}`}
+      className={`ring-tile ${locked ? "locked" : "clickable"}`}
       tabIndex={locked ? -1 : 0}
+      role={locked ? undefined : "button"}
+      onClick={handleLaunch}
+      onKeyDown={handleKeyDown}
       aria-label={ariaSummary(app, pct, restDay)}
     >
       <div className="ring-svg-wrap" style={{ width: size, height: size }}>

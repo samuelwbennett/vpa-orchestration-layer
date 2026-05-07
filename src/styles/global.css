@@ -223,9 +223,30 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   text-align: center;
   outline: none;
+  padding: 8px 6px 4px;
+  border-radius: 14px;
+  transition: background 0.12s ease, transform 0.12s ease;
 }
 
-.ring-tile.locked { opacity: 0.55; }
+/* Whole tile is the launch surface for the app. */
+.ring-tile.clickable {
+  cursor: pointer;
+}
+
+.ring-tile.clickable:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.ring-tile.clickable:active {
+  transform: translateY(1px);
+}
+
+.ring-tile.clickable:focus-visible {
+  background: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 0 2px var(--blue);
+}
+
+.ring-tile.locked { opacity: 0.55; cursor: default; }
 
 .ring-svg-wrap {
   position: relative;
