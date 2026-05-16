@@ -9,8 +9,13 @@ import TodayPlan from "./components/TodayPlan.jsx";
 import Insights from "./components/Insights.jsx";
 import Login from "./components/Login.jsx";
 import AccountUnlinked from "./components/AccountUnlinked.jsx";
+import RolePlaceholder from "./components/RolePlaceholder.jsx";
+import TeacherView from "./components/TeacherView.jsx";
+import AdminView from "./components/AdminView.jsx";
+import ParentView from "./components/ParentView.jsx";
 import Earnings from "./components/Earnings.jsx";
 import { useIncentives } from "./hooks/useIncentives.js";
+import { computeOnTrack } from "./utils/onTrack.js";
 
 // Parked but kept in the repo — re-enable when ready:
 //   import StrandGarden from "./components/StrandGarden.jsx";
@@ -23,7 +28,8 @@ import { useIncentives } from "./hooks/useIncentives.js";
 // AppCard is redundant. Leaderboard was demo-only data.
 
 export default function App() {
-  const { session, student, status, signOut, refresh: refreshAuth } = useAuth();
+  const { session, profile, role, student, status, signOut, refresh: refreshAuth } =
+    useAuth();
 
   // ---- Auth gates ----
   if (status === "loading") {
@@ -41,7 +47,26 @@ export default function App() {
     );
   }
 
-  return <SignedInDashboard student={student} signOut={signOut} />;
+  // ---- Role routing (status === "ready") ----
+  // Student gets the existing dashboard; teacher / admin / parent get
+  // a clean placeholder until their views ship in later blueprint
+  // steps. A role we don't recognize is treated like an unlinked
+  // account rather than crashing.
+  if (role === "student") {
+    return <SignedInDashboard student={student} signOut={signOut} />;
+  }
+  if (role === "teacher") {
+    return <TeacherView profile={profile} signOut={signOut} />;
+  }
+  if (role === "admin") {
+    return <AdminView profile={profile} signOut={signOut} />;
+  }
+  if (role === "parent") {
+    return <ParentView profile={profile} signOut={signOut} />;
+  }
+  return (
+    <AccountUnlinked email={session?.user?.email} onRefresh={refreshAuth} />
+  );
 }
 
 // The actual dashboard, only rendered after we have a linked student.
@@ -138,28 +163,4 @@ function FullScreenMessage({ children }) {
       </div>
     </div>
   );
-}
-
-/**
- * On-Track logic — % of daily XP goal completion across active apps.
- *   >= 80%  → green   "On Track"
- *   >= 40%  → yellow  "Slightly Behind"
- *   <  40%  → red     "Needs Attention"
- *
- * Reading Academy (coming_soon) is excluded.
- */
-function computeOnTrack(apps) {
-  const active = apps.filter((a) => a.status !== "coming_soon" && a.dailyGoal > 0);
-  if (active.length === 0) return { status: "green", label: "On Track" };
-
-  const totalGoal = active.reduce((s, a) => s + a.dailyGoal, 0);
-  const totalXP = active.reduce(
-    (s, a) => s + Math.min(a.todayXP, a.dailyGoal),
-    0
-  );
-  const pct = totalGoal === 0 ? 0 : totalXP / totalGoal;
-
-  if (pct >= 0.8) return { status: "green", label: "On Track" };
-  if (pct >= 0.4) return { status: "yellow", label: "Slightly Behind" };
-  return { status: "red", label: "Needs Attention" };
 }

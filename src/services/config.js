@@ -72,5 +72,15 @@ export const config = {
   },
 
   // ----- Polling -----
-  pollIntervalMs: Number(env.VITE_POLL_INTERVAL_MS) || 60_000
+  pollIntervalMs: Number(env.VITE_POLL_INTERVAL_MS) || 60_000,
+
+  // ----- Auth provisioning -----
+  // /api/provision-self is the server-controlled endpoint that
+  // idempotently creates a user_profiles row on first sign-in and
+  // returns the caller's role. Currently hosted on the Reading
+  // Academy deployment; a candidate to move to a shared home
+  // alongside the role schema (see supabase/README.md).
+  provisionSelfUrl:
+    env.VITE_PROVISION_SELF_URL ||
+    "https://reading-academy.vercel.app/api/provision-self"
 };

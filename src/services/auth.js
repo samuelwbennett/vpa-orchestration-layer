@@ -4,6 +4,7 @@
 // =====================================================
 
 import { supabase } from "./supabaseClient.js";
+import { config } from "./config.js";
 
 export async function getSession() {
   const { data } = await supabase.auth.getSession();
@@ -52,4 +53,30 @@ export async function fetchLinkedStudent() {
     return null;
   }
   return student || null;
+}
+
+// Server-controlled provisioning. POSTs the current session's JWT to
+// /api/provision-self, which idempotently creates the caller's
+// user_profiles row if missing (role decided server-side) and returns
+// { ok, isNew, roleChanged, profile, student, status }. This is how
+// the orchestration layer learns a signed-in user's role. Returns null
+// when there's no session; throws on a non-OK response so the caller
+// can fall back.
+export async function provisionSelf() {
+  const { data } = await supabase.auth.getSession();
+  const session = data?.session;
+  if (!session) return null;
+
+  const res = await fetch(config.provisionSelfUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: "{}",
+  });
+  if (!res.ok) {
+    throw new Error(`provision-self responded ${res.status}`);
+  }
+  return res.json();
 }
