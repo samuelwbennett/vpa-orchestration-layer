@@ -27,13 +27,43 @@ export default function AdminView({ profile, signOut }) {
 
   const adminName = (profile && profile.display_name) || "there";
 
-  const summaries = students.map((s) => ({
+  // The hook returns one row per (class, student). For admin counts +
+  // the intervention queue + the All Students roster we want one row
+  // PER STUDENT — with all the classes they're in folded together.
+  // (The per-(class,student) shape is preserved in the raw `students`
+  // array for any future view that wants it.)
+  const uniqueStudents = (() => {
+    const byId = new Map();
+    for (const s of students) {
+      const existing = byId.get(s.id);
+      const classEntry = {
+        classId: s.classId,
+        className: s.className,
+        teacherName: s.teacherName,
+        rowKey: s.rowKey,
+      };
+      if (existing) {
+        existing.classes.push(classEntry);
+      } else {
+        byId.set(s.id, {
+          ...s,
+          // Anchor rowKey is the first one we saw — used for expand state.
+          rowKey: s.rowKey,
+          classes: [classEntry],
+        });
+      }
+    }
+    return Array.from(byId.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  })();
+
+  const summaries = uniqueStudents.map((s) => ({
     student: s,
     summary: summarize(s.apps),
   }));
 
-  const uniqueStudentIds = new Set(students.map((s) => s.id));
-  const totalStudents = uniqueStudentIds.size;
+  const totalStudents = uniqueStudents.length;
   const totalClasses = classes.length;
   const totalTeachers = teachers.filter((t) => t.role === "teacher").length;
   const needsAttention = summaries.filter(
@@ -172,7 +202,7 @@ export default function AdminView({ profile, signOut }) {
                         </span>
                         <span className="queue-name">{student.name}</span>
                         <span className="queue-reason">
-                          {student.className} · {summary.reason}
+                          {classLabel(student.classes)} · {summary.reason}
                         </span>
                         {summary.lagging.length > 0 && (
                           <span className="queue-lagging">
@@ -274,10 +304,7 @@ export default function AdminView({ profile, signOut }) {
                         )}
                         <span className="roster-name">{student.name}</span>
                         <span className="roster-class">
-                          {student.className}
-                          {student.teacherName
-                            ? ` · ${student.teacherName}`
-                            : ""}
+                          {classLabel(student.classes)}
                         </span>
                         <span className="app-dots">
                           {(student.apps || []).map((a) => (
@@ -351,6 +378,21 @@ export default function AdminView({ profile, signOut }) {
 }
 
 // ---- helpers ----
+
+// Render a single readable label for a student's class memberships:
+//   1 class  → "Class · Teacher"
+//   2 classes → "Class A · Class B"
+//   3+ classes → "Class A · Class B · +N more"
+function classLabel(classes) {
+  if (!classes || classes.length === 0) return "Class";
+  if (classes.length === 1) {
+    const c = classes[0];
+    return c.teacherName ? `${c.className} · ${c.teacherName}` : c.className;
+  }
+  const names = classes.map((c) => c.className);
+  if (names.length <= 2) return names.join(" · ");
+  return `${names[0]} · ${names[1]} · +${names.length - 2} more`;
+}
 
 function cssId(rowKey) {
   return rowKey.replace(/[^a-zA-Z0-9_-]/g, "_");
