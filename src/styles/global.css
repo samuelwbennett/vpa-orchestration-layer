@@ -1286,6 +1286,60 @@ a { color: inherit; text-decoration: none; }
   color: var(--text);
 }
 
+/* Weekly attendance strip — five dots labeled M T W T F, filled
+   for weekdays the student was present this week. Sits between the
+   dollar stats and the cross-app XP rollup. */
+.attendance-strip {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.attendance-strip-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.attendance-strip-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.attendance-strip-count {
+  font-size: 12px;
+  color: var(--text);
+}
+.attendance-dots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.attendance-dot {
+  height: 36px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.attendance-dot.filled {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+}
+.attendance-strip-foot {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* Cross-app XP rollup inside the Earnings card. Surfaces the true
    ecosystem-wide XP via useXpRollup so the panel shows the full
    picture, even though the dollar economy above still reflects

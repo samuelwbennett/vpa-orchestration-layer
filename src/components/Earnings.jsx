@@ -64,6 +64,18 @@ export default function Earnings({ data, loading, error, redeem, studentId }) {
         <Stat label="Redeemed" value={`$${earnings.totalRedeemed.toFixed(2)}`} />
       </div>
 
+      {/* Attendance progress — five-dot row showing M T W T F, lit
+          for each weekday this student was present this week. Only
+          renders when the server is on the attendance model (older
+          responses won't have daysPresentThisWeek). */}
+      {typeof earnings.daysPresentThisWeek === "number" && (
+        <AttendanceStrip
+          present={earnings.daysPresentThisWeek}
+          max={earnings.maxDaysPerWeek || 5}
+          dollarsPerDay={rules.dollarsPerDay ?? 2}
+        />
+      )}
+
       {xp.totals && (xp.totals.today > 0 || xp.totals.thisWeek > 0 || xp.totals.allTime > 0) && (
         <div className="earnings-xp-rollup">
           <div className="earnings-xp-rollup-label">XP across all apps</div>
@@ -76,7 +88,9 @@ export default function Earnings({ data, loading, error, redeem, studentId }) {
       )}
 
       <div className="earnings-rules">
-        Earn ${rules.ratePerXp.toFixed(2)} per XP · cap ${rules.dailyDollarsCap.toFixed(2)}/day · ${rules.weeklyDollarsCap.toFixed(2)}/week
+        {rules.model === "attendance"
+          ? `Earn $${(rules.dollarsPerDay ?? 2).toFixed(2)} for each weekday you show up · up to $${(rules.weeklyDollarsCap ?? 10).toFixed(2)}/week`
+          : `Earn $${rules.ratePerXp.toFixed(2)} per XP · cap $${rules.dailyDollarsCap.toFixed(2)}/day · $${rules.weeklyDollarsCap.toFixed(2)}/week`}
       </div>
 
       {redemptions && redemptions.length > 0 && (
@@ -118,6 +132,47 @@ function Stat({ label, value }) {
     <div className="earnings-stat">
       <div className="earnings-stat-label">{label}</div>
       <div className="earnings-stat-value">{value}</div>
+    </div>
+  );
+}
+
+/**
+ * AttendanceStrip — five dots labeled M T W T F, filled in dark for
+ * weekdays the student was present this week, hollow otherwise. The
+ * server tells us how many of the 5 are present; we fill from the
+ * left (we don't currently know WHICH specific days were present,
+ * only the count).
+ */
+function AttendanceStrip({ present, max, dollarsPerDay }) {
+  const earned = present * dollarsPerDay;
+  const maxPossible = max * dollarsPerDay;
+  const remaining = Math.max(0, max - present);
+  return (
+    <div className="attendance-strip">
+      <div className="attendance-strip-head">
+        <span className="attendance-strip-label">This week</span>
+        <span className="attendance-strip-count">
+          {present} of {max} weekdays · ${earned.toFixed(2)} of ${maxPossible.toFixed(2)}
+        </span>
+      </div>
+      <div className="attendance-dots">
+        {Array.from({ length: max }, (_, i) => (
+          <div
+            key={i}
+            className={`attendance-dot${i < present ? " filled" : ""}`}
+            title={i < present ? "Present" : "Not yet"}
+          >
+            {["M", "T", "W", "T", "F"][i] || ""}
+          </div>
+        ))}
+      </div>
+      {remaining > 0 && (
+        <div className="attendance-strip-foot">
+          {remaining === 1
+            ? `1 more weekday to hit ${"$"}${maxPossible.toFixed(2)} this week.`
+            : `${remaining} more weekdays to hit ${"$"}${maxPossible.toFixed(2)} this week.`}
+        </div>
+      )}
     </div>
   );
 }
