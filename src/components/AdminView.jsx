@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { RefreshCw, LogOut, ChevronDown, ChevronRight } from "lucide-react";
 import { useAdminOverview } from "../hooks/useAdminOverview.js";
 import { summarize, priority, appStatusLabel } from "../utils/onTrack.js";
+import RegistrationPanel from "./RegistrationPanel.jsx";
 
 const QUEUE_DISPLAY_LIMIT = 10;
 
@@ -214,12 +215,11 @@ export default function AdminView({ profile, signOut }) {
             </section>
           )}
 
-          {/* Teachers */}
+          {/* Staff — teachers + admins, since both appear in this list */}
           {teachers.length > 0 && (
             <section className="section">
               <h2 className="section-title">
-                Teachers (
-                {teachers.filter((t) => t.role === "teacher").length})
+                Staff ({teachers.length})
               </h2>
               <div className="card admin-list">
                 {teachers.map((t) => (
@@ -240,11 +240,11 @@ export default function AdminView({ profile, signOut }) {
             </section>
           )}
 
-          {/* All students */}
+          {/* All students — count unique students, not (class × student) rows */}
           {students.length > 0 && (
             <section className="section">
               <h2 className="section-title">
-                All students ({students.length})
+                All students ({totalStudents})
               </h2>
               <div className="card teacher-roster">
                 {summaries.map(({ student, summary }) => {
@@ -338,6 +338,12 @@ export default function AdminView({ profile, signOut }) {
               </div>
             </section>
           )}
+
+          <RegistrationPanel
+            classes={classes}
+            teachers={teachers}
+            onSuccess={refresh}
+          />
         </>
       )}
     </div>

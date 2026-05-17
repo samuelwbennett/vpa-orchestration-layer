@@ -126,6 +126,13 @@ The bridge approach makes this ordering possible: the older apps keep working un
 - **Scope note:** provisioning UI (add teacher / add class / invite students) is *not* in this step — it needs server-side write endpoints to do safely, which deserves its own deliberate build. For now the admin can see everything; writes still happen via the seed SQL or direct DB edits. Provisioning UI is a natural follow-up.
 - **Ships:** an admin can read the whole program from a screen — the visibility piece is closed. Verified with a clean production build.
 
+### Step 3.5 — Registration UI ✓ built 2026-05-17
+- Closed the provisioning gap flagged in Step 3. Admins now have first-class "Create class" and "Add students to a class" forms inside the AdminView (`RegistrationPanel.jsx`, rendered as a "Manage" section under the roster). Bulk-add returns invite URLs with one-tap copy — designed for "I have a 25-name CSV from the registrar, give me 25 sign-in links."
+- New endpoint `reading-academy/api/_handlers/create-class.js` (admin-only; service-role insert into `teacher_classes` on behalf of any teacher in the admin's org). Registered in `api/[...slug].js`.
+- Patched `bulk-provision-students.js`: admin in the same org can now enroll into any class, not just their own. Teacher ownership rule unchanged for non-admin callers.
+- New: `services/registration.js` (thin JWT-authed POST wrapper for both endpoints), `RegistrationPanel.jsx`, `.reg-*` styles in `global.css`.
+- **Ships:** an admin can stand up a whole class without touching SQL. Verified with a clean production build (1573 modules). Requires a `reading-academy` redeploy to expose `/api/create-class` and the updated `bulk-provision-students`.
+
 ### Step 4 — Parent view ✓ built 2026-05-16
 - Built the parent view in the orchestration layer: one card per child, with the child's name, an "on-track" pill in warmer parent tone (`On Track` / `Building up` / `Just getting started`), today's pace, today's wins (apps where the goal was met), and an expandable per-app drill-down. Empty state when no children are linked yet.
 - The bridge was the feature here, as predicted: `user_profiles.role = 'parent'` drives routing, the older `guardian_students` table drives which children the parent sees. RLS (`guardian_students_select_own` + `students_select_via_guardian`) does the scoping — no new server endpoint needed.
@@ -134,11 +141,16 @@ The bridge approach makes this ordering possible: the older apps keep working un
 - **Ships:** parents get visibility — "actionable data for all" is now literally all four roles. Verified with a clean production build; needs a redeploy of `reading-academy` to pick up the provision-self patch.
 
 ### Step 5 — Reconcile the verticals
-- Bring Math Facts, Reading Facts, and the orchestration layer's remaining data paths fully onto the unified `user_profiles` model and helpers; retire the `guardians`-only paths.
-- While here, close the integration seam from `ECOSYSTEM-MAP.md`: wire the contract's `/api/today` and `/api/xp` into the launcher adapters.
-- **Ships:** one identity model across the whole ecosystem, and the launcher consuming the full orchestration contract. The bridge is removed; nothing is left straddling two models.
+- **Part A — integration seam closed ✓ 2026-05-17.** Wired the contract v1.0 `/api/today` + `/api/xp` endpoints into the launcher:
+  - `services/readingAcademy.js` got `fetchToday()` + `fetchXp()` methods (graceful degradation on failure, like the existing `fetchSnapshot`/`fetchMastery`).
+  - `services/orchestrator.js` got `fetchAllToday()` (returns per-app blocks + a top-priority pick) and `fetchAllXp()` (returns per-app windows + summed totals + max `lastEarnedAt`).
+  - New hooks `hooks/useTodayPriority.js` and `hooks/useXpRollup.js` so any role view can opt into the contract data without touching the existing snapshot path.
+  - Math Facts / Reading Facts / Math Academy adapters don't implement `fetchToday`/`fetchXp` yet — they simply don't contribute. Implementing those endpoints in each app is **Part B**.
+- **Part B — identity reconciliation, still pending.** Bring Math Facts, Reading Facts, and the orchestration layer's remaining data paths fully onto the unified `user_profiles` model and helpers; retire the `guardians`-only paths. The bridge keeps both apps working until this lands. (Math Facts in particular still uses `create_student_for_guardian` RPC and reads from `students` directly without ever touching `user_profiles`.)
+- **Part C — contract endpoints in the other apps.** Implement `/api/today` and `/api/xp` in Math Facts, Reading Facts, and the Math Academy proxy. Once they're live, the launcher's `fetchAllToday`/`fetchAllXp` auto-include them with no code change here.
+- **Ships when complete:** one identity model across the whole ecosystem, and the launcher consuming the full orchestration contract from every app. The bridge is removed; nothing is left straddling two models.
 
-Steps 1–4 each deploy on their own. Step 5 is cleanup that's safe to do precisely because the bridge kept everything working through Steps 1–4.
+Steps 1–4 + 3.5 each deploy on their own. Step 5 is cleanup that's safe to do precisely because the bridge kept everything working through Steps 1–4.
 
 ---
 
