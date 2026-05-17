@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import { RefreshCw, LogOut, ChevronDown, ChevronRight } from "lucide-react";
 import { useParentChildren } from "../hooks/useParentChildren.js";
+import { useTodayPriority } from "../hooks/useTodayPriority.js";
+import { useXpRollup } from "../hooks/useXpRollup.js";
 import { summarize } from "../utils/onTrack.js";
 
 /**
  * ParentView — the family-facing experience for the VPA Learning OS.
  *
  * One card per child, scoped to whoever's linked via guardian_students:
- * name, today's pace (in warm/encouraging language), today's wins, and
- * an expandable per-app drill-down. Read-only by design.
+ * name, today's pace (in warm/encouraging language), today's wins, the
+ * cross-app priority for what the kid should do RIGHT NOW (driven by
+ * the contract /api/today), today's XP across all apps, and an
+ * expandable per-app drill-down. Read-only by design — parents watch,
+ * they don't drive.
  */
 export default function ParentView({ profile, signOut }) {
   const { children, loading, error, lastUpdated, refresh } =
@@ -77,90 +82,128 @@ export default function ParentView({ profile, signOut }) {
         </div>
       )}
 
-      {children.map((child) => {
-        const summary = summarize(child.apps);
-        const active = (child.apps || []).filter(
-          (a) => a.status !== "coming_soon" && a.dailyGoal > 0
-        );
-        const wins = active.filter((a) => a.todayXP >= a.dailyGoal);
-        const open = expandedId === child.id;
-
-        return (
-          <section className="section" key={child.id}>
-            <div className="card parent-child">
-              <div className="parent-child-head">
-                <h2 className="parent-child-name">{child.name}</h2>
-                <span className={`on-track ${summary.onTrack.status}`}>
-                  <span className="dot" />
-                  {parentTone(summary.onTrack.status)}
-                </span>
-              </div>
-
-              <div className="parent-child-pace">
-                {parentPace(summary, active.length)}
-              </div>
-
-              {wins.length > 0 && (
-                <div className="parent-wins">
-                  <div className="parent-wins-label">Today's wins</div>
-                  <ul className="parent-wins-list">
-                    {wins.map((a) => (
-                      <li key={a.id}>{a.name} — goal met</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <button
-                className="parent-toggle"
-                onClick={() => setExpandedId(open ? null : child.id)}
-              >
-                {open ? (
-                  <ChevronDown size={14} />
-                ) : (
-                  <ChevronRight size={14} />
-                )}
-                {open ? "Hide per-app details" : "See per-app details"}
-              </button>
-
-              {open && (
-                <div className="parent-drill">
-                  {(child.apps || []).length === 0 && (
-                    <div className="drill-empty">
-                      No app data available for {child.name} yet.
-                    </div>
-                  )}
-                  {(child.apps || []).map((a) => (
-                    <div key={a.id} className="drill-app">
-                      <div className="drill-app-top">
-                        <span className="drill-app-name">{a.name}</span>
-                        <span className={`status-pill ${a.status}`}>
-                          {a.status.replace("_", " ")}
-                        </span>
-                      </div>
-                      <div className="drill-app-xp">
-                        <span>
-                          <strong>{a.todayXP}</strong>
-                          {a.dailyGoal ? ` / ${a.dailyGoal}` : ""} XP today
-                        </span>
-                        <span className="muted">
-                          {a.weeklyXP} XP this week
-                        </span>
-                      </div>
-                      {a.nextLesson && (
-                        <div className="drill-app-next">
-                          Next: {a.nextLesson}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        );
-      })}
+      {children.map((child) => (
+        <ChildCard
+          key={child.id}
+          child={child}
+          open={expandedId === child.id}
+          onToggle={() =>
+            setExpandedId(expandedId === child.id ? null : child.id)
+          }
+        />
+      ))}
     </div>
+  );
+}
+
+/**
+ * One child's card. Lives in its own component so we can call the
+ * per-child `useTodayPriority` + `useXpRollup` hooks here without
+ * violating the rules of hooks.
+ */
+function ChildCard({ child, open, onToggle }) {
+  const today = useTodayPriority({ studentId: child.id });
+  const xp = useXpRollup({ studentId: child.id });
+
+  const summary = summarize(child.apps);
+  const active = (child.apps || []).filter(
+    (a) => a.status !== "coming_soon" && a.dailyGoal > 0
+  );
+  const wins = active.filter((a) => a.todayXP >= a.dailyGoal);
+
+  const topRec =
+    today.top && today.top.recommendation?.kind !== "none"
+      ? today.top
+      : null;
+
+  return (
+    <section className="section">
+      <div className="card parent-child">
+        <div className="parent-child-head">
+          <h2 className="parent-child-name">{child.name}</h2>
+          <span className={`on-track ${summary.onTrack.status}`}>
+            <span className="dot" />
+            {parentTone(summary.onTrack.status)}
+          </span>
+        </div>
+
+        <div className="parent-child-pace">
+          {parentPace(summary, active.length)}
+        </div>
+
+        {/* Cross-app priority — what the kid should be doing right now. */}
+        {topRec && (
+          <div className="parent-priority">
+            <div className="parent-priority-label">Today's priority</div>
+            <div className="parent-priority-line">
+              <strong>{topRec.name}</strong> — {topRec.recommendation.headline}
+            </div>
+            <div className="parent-priority-sub">
+              {topRec.recommendation.subtitle}
+            </div>
+          </div>
+        )}
+
+        {/* Cross-app XP totals — only render when there's something to show. */}
+        {xp.totals && (xp.totals.today > 0 || xp.totals.thisWeek > 0) && (
+          <div className="parent-xp-rollup">
+            <strong>{Math.round(xp.totals.today)} XP</strong> earned today ·{" "}
+            <strong>{Math.round(xp.totals.thisWeek)} XP</strong> this week
+            <span className="parent-xp-source"> · across all apps</span>
+          </div>
+        )}
+
+        {wins.length > 0 && (
+          <div className="parent-wins">
+            <div className="parent-wins-label">Today's wins</div>
+            <ul className="parent-wins-list">
+              {wins.map((a) => (
+                <li key={a.id}>{a.name} — goal met</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button className="parent-toggle" onClick={onToggle}>
+          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          {open ? "Hide per-app details" : "See per-app details"}
+        </button>
+
+        {open && (
+          <div className="parent-drill">
+            {(child.apps || []).length === 0 && (
+              <div className="drill-empty">
+                No app data available for {child.name} yet.
+              </div>
+            )}
+            {(child.apps || []).map((a) => (
+              <div key={a.id} className="drill-app">
+                <div className="drill-app-top">
+                  <span className="drill-app-name">{a.name}</span>
+                  <span className={`status-pill ${a.status}`}>
+                    {a.status.replace("_", " ")}
+                  </span>
+                </div>
+                <div className="drill-app-xp">
+                  <span>
+                    <strong>{a.todayXP}</strong>
+                    {a.dailyGoal ? ` / ${a.dailyGoal}` : ""} XP today
+                  </span>
+                  <span className="muted">
+                    {a.weeklyXP} XP this week
+                  </span>
+                </div>
+                {a.nextLesson && (
+                  <div className="drill-app-next">
+                    Next: {a.nextLesson}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

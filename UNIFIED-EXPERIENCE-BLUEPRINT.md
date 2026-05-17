@@ -154,10 +154,10 @@ The bridge approach makes this ordering possible: the older apps keep working un
 - **Ships:** the orchestration layer is now the canonical role + recommendation + XP rollup home for the whole ecosystem — every app contributes to the contract. The deeper guardians→user_profiles data migration is the only remaining cleanup.
 
 ### Step 5 — UI surface for the contract data ✓ 2026-05-17
-- `TodayPlan.jsx` now drives off the contract rather than per-app snapshots: `useTodayPriority` picks the single highest-priority block across all four apps; `useXpRollup` adds a unified "X XP today · Y XP this week · across all apps" line.
-- Three-tier fallback: contract pick → legacy snapshot-based pick → "all goals complete". Means the card always renders even if a contract endpoint is degraded.
-- "+ N more apps have recommendations today" line surfaces when multiple apps want attention but only the top is hero'd.
-- App.jsx passes `student.id` into TodayPlan. CSS: new `.reason-meta`, `.xp-rollup-line`, and `.today-plan.medium` styling.
+- **Student view (`TodayPlan.jsx`):** drives off the contract rather than per-app snapshots. `useTodayPriority` picks the single highest-priority block across all four apps; `useXpRollup` adds a unified "X XP today · Y XP this week · across all apps" line. Three-tier fallback: contract pick → legacy snapshot-based pick → "all goals complete". "+ N more apps have recommendations today" surfaces when multiple apps want attention but only the top is hero'd.
+- **Parent view (`ParentView.jsx`):** refactored to a `ChildCard` subcomponent so per-child `useTodayPriority` + `useXpRollup` hooks can be called without violating rules-of-hooks. Each child now shows "Today's priority" (informational, no Start button — parents watch) plus the cross-app XP totals. CSS: `.parent-priority*`, `.parent-xp-rollup`.
+- **Earnings panel (`Earnings.jsx`):** added an "XP across all apps" section (today / this week / lifetime). The dollar economy above it still reads from `daily_progress.total_xp` — which today only Math Facts writes to — so dollars and cross-app XP can disagree until the other three apps also write to `daily_progress`. That's a tracked backend follow-up; the UI now makes the gap visible instead of hiding it.
+- App.jsx passes `student.id` into `TodayPlan` + `Earnings`. CSS: new `.reason-meta`, `.xp-rollup-line`, `.today-plan.medium`, `.parent-priority*`, `.parent-xp-rollup`, `.earnings-xp-rollup*`.
 
 Steps 1–4 + 3.5 each deploy on their own. Step 5 is cleanup that's safe to do precisely because the bridge kept everything working through Steps 1–4.
 

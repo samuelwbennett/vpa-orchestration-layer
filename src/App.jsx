@@ -141,6 +141,7 @@ function SignedInDashboard({ student, signOut }) {
               loading={incentives.loading}
               error={incentives.error}
               redeem={incentives.redeem}
+              studentId={student.id}
             />
           </div>
         </div>

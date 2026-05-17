@@ -1,16 +1,22 @@
 import React, { useState } from "react";
 import { Coins, GraduationCap, Store, X } from "lucide-react";
+import { useXpRollup } from "../hooks/useXpRollup.js";
 
 /**
  * Earnings — shows the signed-in student's incentive balance with a
  * breakdown of today / this week / lifetime, plus a "Redeem" button
  * that opens the redemption modal.
  *
- * Data comes from useIncentives(studentId), which talks to the
- * /api/incentives proxy.
+ * Dollar data comes from useIncentives(studentId), which talks to the
+ * /api/incentives proxy and reads from `daily_progress.total_xp`.
+ * Today that's only Math Facts XP, since Math Facts is the only app
+ * writing to daily_progress. The cross-app XP we surface below
+ * (useXpRollup → contract /api/xp on every app) reflects the full
+ * picture, even though the dollar economy hasn't caught up yet.
  */
 
-export default function Earnings({ data, loading, error, redeem }) {
+export default function Earnings({ data, loading, error, redeem, studentId }) {
+  const xp = useXpRollup({ studentId });
   const [modalOpen, setModalOpen] = useState(false);
 
   if (loading && !data) {
@@ -57,6 +63,17 @@ export default function Earnings({ data, loading, error, redeem }) {
         <Stat label="Lifetime" value={`$${earnings.totalEarned.toFixed(2)}`} />
         <Stat label="Redeemed" value={`$${earnings.totalRedeemed.toFixed(2)}`} />
       </div>
+
+      {xp.totals && (xp.totals.today > 0 || xp.totals.thisWeek > 0 || xp.totals.allTime > 0) && (
+        <div className="earnings-xp-rollup">
+          <div className="earnings-xp-rollup-label">XP across all apps</div>
+          <div className="earnings-xp-rollup-stats">
+            <Stat label="Today" value={`${Math.round(xp.totals.today)} XP`} />
+            <Stat label="This week" value={`${Math.round(xp.totals.thisWeek)} XP`} />
+            <Stat label="Lifetime" value={`${Math.round(xp.totals.allTime)} XP`} />
+          </div>
+        </div>
+      )}
 
       <div className="earnings-rules">
         Earn ${rules.ratePerXp.toFixed(2)} per XP · cap ${rules.dailyDollarsCap.toFixed(2)}/day · ${rules.weeklyDollarsCap.toFixed(2)}/week
