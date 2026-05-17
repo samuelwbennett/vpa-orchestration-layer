@@ -145,10 +145,12 @@ The bridge approach makes this ordering possible: the older apps keep working un
   - `services/readingAcademy.js` got `fetchToday()` + `fetchXp()` methods (graceful degradation on failure, like the existing `fetchSnapshot`/`fetchMastery`).
   - `services/orchestrator.js` got `fetchAllToday()` (returns per-app blocks + a top-priority pick) and `fetchAllXp()` (returns per-app windows + summed totals + max `lastEarnedAt`).
   - New hooks `hooks/useTodayPriority.js` and `hooks/useXpRollup.js` so any role view can opt into the contract data without touching the existing snapshot path.
-  - Math Facts / Reading Facts / Math Academy adapters don't implement `fetchToday`/`fetchXp` yet — they simply don't contribute. Implementing those endpoints in each app is **Part B**.
-- **Part B — identity reconciliation, still pending.** Bring Math Facts, Reading Facts, and the orchestration layer's remaining data paths fully onto the unified `user_profiles` model and helpers; retire the `guardians`-only paths. The bridge keeps both apps working until this lands. (Math Facts in particular still uses `create_student_for_guardian` RPC and reads from `students` directly without ever touching `user_profiles`.)
-- **Part C — contract endpoints in the other apps.** Implement `/api/today` and `/api/xp` in Math Facts, Reading Facts, and the Math Academy proxy. Once they're live, the launcher's `fetchAllToday`/`fetchAllXp` auto-include them with no code change here.
-- **Ships when complete:** one identity model across the whole ecosystem, and the launcher consuming the full orchestration contract from every app. The bridge is removed; nothing is left straddling two models.
+- **Part B — identity bridge for Math Facts + Reading Facts ✓ 2026-05-17.** Both apps now call `/api/provision-self` on every sign-in (Math Facts: `src/auth.js` `useAuth` hook; Reading Facts: `src/auth.js` `getSession()` + `onAuthChange()`). Every guardian who signs into either app gets a `user_profiles` row with `role='student'` (default). The orchestration layer can now read every user's role from one canonical place. The deeper data migration (retiring `create_student_for_guardian` RPC in Math Facts) is still ahead but no longer urgent — the bridge does the load-bearing work.
+- **Part C — contract endpoints in the other apps ✓ 2026-05-17.** Math Facts and Reading Facts both ship `/api/today` + `/api/xp` in this round:
+  - `math-facts-trainer-react/api/today.js` + `api/xp.js`
+  - `math-facts-trainer-react/reading-facts-app/api/today.js` + `api/xp.js`
+  - Orchestrator adapters extended: `services/mathFacts.js` + `services/readingFacts.js` each got `fetchToday()` + `fetchXp()`, so `fetchAllToday`/`fetchAllXp` now aggregate across three apps (Reading Academy + Math Facts + Reading Facts). Math Academy proxy is the only remaining gap — its data lives behind the partner API and would need a separate proxy implementation.
+- **Ships:** the orchestration layer is now the canonical role + recommendation + XP rollup home for the whole ecosystem. Math Academy contract endpoints + the deeper guardians→user_profiles data migration are the remaining cleanup; everything else is in place.
 
 Steps 1–4 + 3.5 each deploy on their own. Step 5 is cleanup that's safe to do precisely because the bridge kept everything working through Steps 1–4.
 

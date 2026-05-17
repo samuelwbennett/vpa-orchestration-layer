@@ -87,6 +87,75 @@ function deriveStatus(today, goal) {
 // On error, returns an empty strands array tagged _degraded so the
 // UI can render a quiet placeholder.
 const MASTERY_PATH = "/api/mastery";
+const TODAY_PATH = "/api/today";
+const XP_PATH = "/api/xp";
+
+// Contract v1.0 — Reading Facts top recommendation. Same shape as
+// readingAcademy.fetchToday and mathFacts.fetchToday.
+export async function fetchToday({ signal, studentId } = {}) {
+  const { baseUrl } = config.readingFacts;
+  const sid = studentId || config.readingFacts.studentId;
+  const url = `${baseUrl}${TODAY_PATH}?student=${encodeURIComponent(sid)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      recommendation: data?.recommendation || null,
+      blocksRemaining: Number(data?.blocksRemaining) || 0,
+      link: data?.recommendation?.path
+        ? `${baseUrl}${data.recommendation.path}`
+        : baseUrl,
+      _notProvisioned: !!data?._notProvisioned,
+    };
+  } catch (err) {
+    console.warn("[readingFacts] today endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      recommendation: null,
+      blocksRemaining: 0,
+      link: baseUrl,
+      _degraded: true,
+    };
+  }
+}
+
+// Contract v1.0 — multi-window XP totals.
+export async function fetchXp({ signal, studentId } = {}) {
+  const { baseUrl } = config.readingFacts;
+  const sid = studentId || config.readingFacts.studentId;
+  const url = `${baseUrl}${XP_PATH}?student=${encodeURIComponent(sid)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      windows: {
+        today: Number(data?.today) || 0,
+        yesterday: Number(data?.yesterday) || 0,
+        thisWeek: Number(data?.thisWeek) || 0,
+        lastWeek: Number(data?.lastWeek) || 0,
+        thisMonth: Number(data?.thisMonth) || 0,
+        allTime: Number(data?.allTime) || 0,
+      },
+      lastEarnedAt: data?.lastEarnedAt || null,
+      _notProvisioned: !!data?._notProvisioned,
+    };
+  } catch (err) {
+    console.warn("[readingFacts] xp endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      windows: {
+        today: 0, yesterday: 0, thisWeek: 0,
+        lastWeek: 0, thisMonth: 0, allTime: 0,
+      },
+      lastEarnedAt: null,
+      _degraded: true,
+    };
+  }
+}
 
 export async function fetchMastery({ signal, studentId } = {}) {
   const { baseUrl } = config.readingFacts;
