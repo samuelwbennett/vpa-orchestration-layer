@@ -153,6 +153,12 @@ The bridge approach makes this ordering possible: the older apps keep working un
   - Orchestrator adapters extended: `services/mathFacts.js`, `services/readingFacts.js`, and `services/mathAcademy.js` each got `fetchToday()` + `fetchXp()`. `fetchAllToday`/`fetchAllXp` now aggregate across all four apps.
 - **Ships:** the orchestration layer is now the canonical role + recommendation + XP rollup home for the whole ecosystem — every app contributes to the contract. The deeper guardians→user_profiles data migration is the only remaining cleanup.
 
+### Step 5 — UI surface for the contract data ✓ 2026-05-17
+- `TodayPlan.jsx` now drives off the contract rather than per-app snapshots: `useTodayPriority` picks the single highest-priority block across all four apps; `useXpRollup` adds a unified "X XP today · Y XP this week · across all apps" line.
+- Three-tier fallback: contract pick → legacy snapshot-based pick → "all goals complete". Means the card always renders even if a contract endpoint is degraded.
+- "+ N more apps have recommendations today" line surfaces when multiple apps want attention but only the top is hero'd.
+- App.jsx passes `student.id` into TodayPlan. CSS: new `.reason-meta`, `.xp-rollup-line`, and `.today-plan.medium` styling.
+
 Steps 1–4 + 3.5 each deploy on their own. Step 5 is cleanup that's safe to do precisely because the bridge kept everything working through Steps 1–4.
 
 ---

@@ -122,7 +122,7 @@ function SignedInDashboard({ student, signOut }) {
 
       {/* Decision engine: what to do RIGHT NOW */}
       <section className="section">
-        <TodayPlan apps={apps} />
+        <TodayPlan apps={apps} studentId={student.id} />
       </section>
 
       {/* Today's Goals + Earnings side by side */}
