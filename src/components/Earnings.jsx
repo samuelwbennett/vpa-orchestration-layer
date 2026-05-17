@@ -36,7 +36,13 @@ export default function Earnings({ data, loading, error, redeem, studentId }) {
   if (!data) return null;
 
   const { earnings, rules, redemptions } = data;
-  const canRedeem = earnings.available >= 0.01;
+  const pendingRedemptions = data.pendingRedemptions || [];
+  const minRedemption = Number(rules.minRedemptionDollars) || 0;
+  // Redeem button only activates when the student has hit the cash-out
+  // threshold (default $10). Below that we show "$X more to redeem"
+  // copy so the goal stays visible.
+  const canRedeem = earnings.available >= minRedemption - 0.001;
+  const dollarsUntilRedeem = Math.max(0, minRedemption - earnings.available);
 
   return (
     <div className="earnings-card">
@@ -46,16 +52,28 @@ export default function Earnings({ data, loading, error, redeem, studentId }) {
           <div className="earnings-headline-value">
             ${earnings.available.toFixed(2)}
           </div>
+          {!canRedeem && minRedemption > 0 && (
+            <div className="earnings-headline-sub">
+              ${dollarsUntilRedeem.toFixed(2)} more to cash out
+            </div>
+          )}
         </div>
         <button
           type="button"
           className="btn-primary"
           disabled={!canRedeem}
           onClick={() => setModalOpen(true)}
+          title={canRedeem ? "Redeem your earnings" : `Reach $${minRedemption.toFixed(2)} to cash out`}
         >
-          <Coins size={16} /> Redeem
+          <Coins size={16} />
+          {canRedeem ? `Redeem $${earnings.available.toFixed(2)}` : "Redeem"}
         </button>
       </div>
+
+      {/* Pending redemptions — admin needs to hand over cash. */}
+      {pendingRedemptions.length > 0 && (
+        <PendingRedemptionsList items={pendingRedemptions} />
+      )}
 
       <div className="earnings-stats">
         <Stat label="Today" value={`$${earnings.today.toFixed(2)}`} />
@@ -127,6 +145,39 @@ export default function Earnings({ data, loading, error, redeem, studentId }) {
   );
 }
 
+/**
+ * PendingRedemptionsList — banner showing redemptions the student
+ * has requested but the admin hasn't paid out yet. One line per
+ * pending row with a "$X awaiting your admin" headline. Disappears
+ * the moment the admin clicks "Mark as paid" on the other end.
+ */
+function PendingRedemptionsList({ items }) {
+  const total = items.reduce((s, r) => s + Number(r.total_dollars), 0);
+  return (
+    <div className="pending-redemption-banner">
+      <div className="pending-redemption-headline">
+        <Coins size={16} /> ${total.toFixed(2)} awaiting your admin
+      </div>
+      <div className="pending-redemption-sub">
+        {items.length === 1
+          ? "Your admin has your cash request — they'll hand it over soon."
+          : `You have ${items.length} pending redemptions — your admin will hand over the cash soon.`}
+      </div>
+      <ul className="pending-redemption-list">
+        {items.map((r) => (
+          <li key={r.id}>
+            <span>{new Date(r.redeemed_at).toLocaleDateString()}</span>
+            <span>${Number(r.total_dollars).toFixed(2)}</span>
+            <span className="muted">
+              ${Number(r.store_amount).toFixed(2)} store · ${Number(r.scholarship_amount).toFixed(2)} scholarship
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Stat({ label, value }) {
   return (
     <div className="earnings-stat">
@@ -178,14 +229,16 @@ function AttendanceStrip({ present, max, dollarsPerDay }) {
 }
 
 function RedeemModal({ available, defaultSplit, onClose, onSubmit }) {
-  const [amount, setAmount] = useState(available);
+  // Amount is locked to the full available balance. The whole point
+  // of the cash-out flow is "request the cash, balance goes to $0
+  // pending the admin handing over the bills." No partial redemptions.
+  const total = Math.round(available * 100) / 100;
   // store-share fraction (0..1). Scholarship is 1 − store.
   const [storeShare, setStoreShare] = useState(defaultSplit?.store ?? 0.5);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
-  const total = Math.max(0, Math.min(available, Number(amount) || 0));
   const storeAmount = Math.round(total * storeShare * 100) / 100;
   const scholarshipAmount = Math.round((total - storeAmount) * 100) / 100;
   const valid = total > 0;
@@ -225,21 +278,15 @@ function RedeemModal({ available, defaultSplit, onClose, onSubmit }) {
         </div>
 
         <form onSubmit={submit} className="modal-body">
-          <label className="modal-field">
+          <div className="modal-field">
             <span>Amount</span>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              max={available}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
+            <div className="modal-amount-locked">
+              ${total.toFixed(2)}
+            </div>
             <span className="modal-help">
-              Up to ${available.toFixed(2)} available
+              Your full balance — your admin will hand you the cash and your balance resets to $0.
             </span>
-          </label>
+          </div>
 
           <div className="modal-split">
             <div className="modal-split-row">

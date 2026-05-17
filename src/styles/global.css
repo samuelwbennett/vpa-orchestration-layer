@@ -1286,6 +1286,127 @@ a { color: inherit; text-decoration: none; }
   color: var(--text);
 }
 
+/* Admin "Pending redemptions" panel — one row per pending request
+   with Mark-as-paid + Cancel actions. */
+.pending-redemptions-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.pending-redemption-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.pending-redemption-row:last-child {
+  border-bottom: none;
+}
+.pending-redemption-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text);
+}
+.pending-redemption-student {
+  font-weight: 600;
+}
+.pending-redemption-amount {
+  font-weight: 600;
+  color: var(--blue);
+}
+.pending-redemption-actions {
+  display: flex;
+  gap: 6px;
+}
+.pending-fulfill-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pending-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pending-cancel-btn:hover:not(:disabled) {
+  color: var(--red);
+  border-color: var(--red);
+}
+.pending-redemption-error {
+  padding: 10px 16px;
+  color: var(--red);
+  font-size: 13px;
+  background: #fef0f0;
+}
+
+/* Sub-line under the headline dollar amount — shown when the
+   student hasn't yet hit the cash-out threshold. */
+.earnings-headline-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Pending-redemption banner inside the student Earnings card.
+   Shows requests the admin hasn't paid out yet. */
+.pending-redemption-banner {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #fff8eb;
+  border: 1px solid #f3e2b6;
+  border-radius: var(--radius-md);
+}
+.pending-redemption-headline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #856200;
+}
+.pending-redemption-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pending-redemption-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.pending-redemption-list li {
+  display: grid;
+  grid-template-columns: 90px 70px 1fr;
+  gap: 8px;
+  color: var(--text);
+}
+
+/* Redemption modal — amount is locked to current balance, so render
+   it as a big read-only number instead of an input. */
+.modal-amount-locked {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 10px 0;
+}
+
 /* Weekly attendance strip — five dots labeled M T W T F, filled
    for weekdays the student was present this week. Sits between the
    dollar stats and the cross-app XP rollup. */

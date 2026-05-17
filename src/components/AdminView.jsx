@@ -3,6 +3,7 @@ import { RefreshCw, LogOut, ChevronDown, ChevronRight } from "lucide-react";
 import { useAdminOverview } from "../hooks/useAdminOverview.js";
 import { summarize, priority, appStatusLabel } from "../utils/onTrack.js";
 import RegistrationPanel from "./RegistrationPanel.jsx";
+import PendingRedemptions from "./PendingRedemptions.jsx";
 
 const QUEUE_DISPLAY_LIMIT = 10;
 
@@ -176,6 +177,9 @@ export default function AdminView({ profile, signOut }) {
               </div>
             </div>
           </section>
+
+          {/* Pending incentive redemptions — admin needs to hand over cash. */}
+          <PendingRedemptions />
 
           {/* Intervention queue */}
           <section className="section">
