@@ -107,6 +107,76 @@ function deriveStatus(today, goal) {
 //   GET {apiBaseUrl}/api/math-academy/mastery?student=<id>
 //   → { studentId, strands: [{ id, label, symbol, mastered, total, grade, ... }] }
 const MASTERY_PATH = "/api/math-academy/mastery";
+const TODAY_PATH = "/api/math-academy/today";
+const XP_PATH = "/api/math-academy/xp";
+
+// Contract v1.0 — Math Academy top recommendation. Same shape as
+// the other apps' fetchToday. Deep links go to mathacademy.com,
+// not the proxy domain.
+export async function fetchToday({ signal, studentId } = {}) {
+  const { apiBaseUrl, deepLinkBaseUrl } = config.mathAcademy;
+  const sid = studentId || config.mathAcademy.studentId;
+  const url = `${apiBaseUrl}${TODAY_PATH}?student=${encodeURIComponent(sid)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      recommendation: data?.recommendation || null,
+      blocksRemaining: Number(data?.blocksRemaining) || 0,
+      link: data?.recommendation?.path
+        ? `${deepLinkBaseUrl}${data.recommendation.path}`
+        : deepLinkBaseUrl,
+      _notLinked: !!data?._notLinked,
+    };
+  } catch (err) {
+    console.warn("[mathAcademy] today endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      recommendation: null,
+      blocksRemaining: 0,
+      link: deepLinkBaseUrl,
+      _degraded: true,
+    };
+  }
+}
+
+// Contract v1.0 — multi-window XP rollup.
+export async function fetchXp({ signal, studentId } = {}) {
+  const { apiBaseUrl } = config.mathAcademy;
+  const sid = studentId || config.mathAcademy.studentId;
+  const url = `${apiBaseUrl}${XP_PATH}?student=${encodeURIComponent(sid)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      windows: {
+        today: Number(data?.today) || 0,
+        yesterday: Number(data?.yesterday) || 0,
+        thisWeek: Number(data?.thisWeek) || 0,
+        lastWeek: Number(data?.lastWeek) || 0,
+        thisMonth: Number(data?.thisMonth) || 0,
+        allTime: Number(data?.allTime) || 0,
+      },
+      lastEarnedAt: data?.lastEarnedAt || null,
+      _notLinked: !!data?._notLinked,
+    };
+  } catch (err) {
+    console.warn("[mathAcademy] xp endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      windows: {
+        today: 0, yesterday: 0, thisWeek: 0,
+        lastWeek: 0, thisMonth: 0, allTime: 0,
+      },
+      lastEarnedAt: null,
+      _degraded: true,
+    };
+  }
+}
 
 export async function fetchMastery({ signal, studentId } = {}) {
   const { apiBaseUrl } = config.mathAcademy;

@@ -146,11 +146,12 @@ The bridge approach makes this ordering possible: the older apps keep working un
   - `services/orchestrator.js` got `fetchAllToday()` (returns per-app blocks + a top-priority pick) and `fetchAllXp()` (returns per-app windows + summed totals + max `lastEarnedAt`).
   - New hooks `hooks/useTodayPriority.js` and `hooks/useXpRollup.js` so any role view can opt into the contract data without touching the existing snapshot path.
 - **Part B — identity bridge for Math Facts + Reading Facts ✓ 2026-05-17.** Both apps now call `/api/provision-self` on every sign-in (Math Facts: `src/auth.js` `useAuth` hook; Reading Facts: `src/auth.js` `getSession()` + `onAuthChange()`). Every guardian who signs into either app gets a `user_profiles` row with `role='student'` (default). The orchestration layer can now read every user's role from one canonical place. The deeper data migration (retiring `create_student_for_guardian` RPC in Math Facts) is still ahead but no longer urgent — the bridge does the load-bearing work.
-- **Part C — contract endpoints in the other apps ✓ 2026-05-17.** Math Facts and Reading Facts both ship `/api/today` + `/api/xp` in this round:
-  - `math-facts-trainer-react/api/today.js` + `api/xp.js`
-  - `math-facts-trainer-react/reading-facts-app/api/today.js` + `api/xp.js`
-  - Orchestrator adapters extended: `services/mathFacts.js` + `services/readingFacts.js` each got `fetchToday()` + `fetchXp()`, so `fetchAllToday`/`fetchAllXp` now aggregate across three apps (Reading Academy + Math Facts + Reading Facts). Math Academy proxy is the only remaining gap — its data lives behind the partner API and would need a separate proxy implementation.
-- **Ships:** the orchestration layer is now the canonical role + recommendation + XP rollup home for the whole ecosystem. Math Academy contract endpoints + the deeper guardians→user_profiles data migration are the remaining cleanup; everything else is in place.
+- **Part C — contract endpoints in the other apps ✓ 2026-05-17.** All four apps now ship `/api/today` + `/api/xp`:
+  - `math-facts-trainer-react/api/today.js` + `api/xp.js` (Math Facts)
+  - `math-facts-trainer-react/reading-facts-app/api/today.js` + `api/xp.js` (Reading Facts)
+  - `math-facts-trainer-react/api/math-academy/today.js` + `api/math-academy/xp.js` (Math Academy partner-API proxy — six parallel calls to MA's `/students/{id}/activity` endpoint, one per window)
+  - Orchestrator adapters extended: `services/mathFacts.js`, `services/readingFacts.js`, and `services/mathAcademy.js` each got `fetchToday()` + `fetchXp()`. `fetchAllToday`/`fetchAllXp` now aggregate across all four apps.
+- **Ships:** the orchestration layer is now the canonical role + recommendation + XP rollup home for the whole ecosystem — every app contributes to the contract. The deeper guardians→user_profiles data migration is the only remaining cleanup.
 
 Steps 1–4 + 3.5 each deploy on their own. Step 5 is cleanup that's safe to do precisely because the bridge kept everything working through Steps 1–4.
 
