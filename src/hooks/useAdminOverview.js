@@ -94,6 +94,7 @@ export function useAdminOverview() {
       // 4. Students referenced by those memberships.
       const studentIds = [...new Set(memberships.map((m) => m.student_id))];
       let studentRows = [];
+      let mathAcademyLinks = {};
       if (studentIds.length > 0) {
         const { data: sRows, error: sErr } = await supabase
           .from("students")
@@ -103,6 +104,28 @@ export function useAdminOverview() {
           .in("id", studentIds);
         if (sErr) throw sErr;
         studentRows = sRows || [];
+
+        // 4b. Existing Math Academy linkages (slug=math_academy).
+        //     Used by the admin's per-student MA-id inline editor so
+        //     it can preload the current value.
+        const { data: maApp } = await supabase
+          .from("learning_apps")
+          .select("id")
+          .eq("slug", "math_academy")
+          .maybeSingle();
+        if (maApp?.id) {
+          const { data: saaRows } = await supabase
+            .from("student_app_accounts")
+            .select("student_id, external_id, enabled")
+            .eq("app_id", maApp.id)
+            .in("student_id", studentIds);
+          mathAcademyLinks = Object.fromEntries(
+            (saaRows || []).map((r) => [
+              r.student_id,
+              { externalId: r.external_id, enabled: !!r.enabled },
+            ]),
+          );
+        }
       }
 
       // ---- Assemble views ----
@@ -178,6 +201,13 @@ export function useAdminOverview() {
             classId: m.class_id,
             className: cls ? cls.name : "Class",
             teacherName: teacherProfile ? teacherProfile.display_name : null,
+            // Existing Math Academy link, if any. `externalId === null`
+            // means unlinked. The admin's inline editor reads + writes
+            // this through /api/link-student-app-account.
+            mathAcademyLink: mathAcademyLinks[s.id] || {
+              externalId: null,
+              enabled: false,
+            },
             apps: [],
           };
         })

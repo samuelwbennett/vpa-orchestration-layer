@@ -4,6 +4,7 @@ import { useAdminOverview } from "../hooks/useAdminOverview.js";
 import { summarize, priority, appStatusLabel } from "../utils/onTrack.js";
 import RegistrationPanel from "./RegistrationPanel.jsx";
 import PendingRedemptions from "./PendingRedemptions.jsx";
+import AccountLinksEditor from "./AccountLinksEditor.jsx";
 
 const QUEUE_DISPLAY_LIMIT = 10;
 
@@ -361,6 +362,12 @@ export default function AdminView({ profile, signOut }) {
                               )}
                             </div>
                           ))}
+                          <AccountLinksEditor
+                            studentId={student.id}
+                            studentName={student.name}
+                            mathAcademyLink={student.mathAcademyLink}
+                            onSaved={refresh}
+                          />
                         </div>
                       )}
                     </div>
