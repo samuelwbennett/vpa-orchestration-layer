@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import {
   signInWithPassword,
   signInWithMagicLink,
+  sendPasswordReset,
 } from "../services/auth.js";
 
 /**
- * Login — minimal email + password screen with a magic-link fallback.
+ * Login — email + password with a magic-link fallback and a
+ * "Forgot password?" flow that emails a reset link.
  *
- * Mirrors the reading-facts and math-facts apps' auth UX so a student
- * who can sign in there can sign in here with the same credentials.
- *
- * Two modes via the segmented control:
+ * Modes:
  *   - "password" — email + password (no email sent, no rate limit)
- *   - "magic"    — email-only, Supabase mails a one-time link
+ *   - "magic"    — email-only, Supabase mails a one-time sign-in link
+ *   - "reset"    — email-only, Supabase mails a password-reset link
+ *
+ * Mirrors the reading-facts and math-facts apps' auth UX so a user who
+ * can sign in there can sign in here with the same credentials.
  */
 export default function Login() {
   const [mode, setMode] = useState("password");
@@ -21,6 +24,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [magicSent, setMagicSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -33,25 +37,29 @@ export default function Login() {
     setErrorMsg("");
     setSubmitting(true);
 
-    const result =
-      mode === "password"
-        ? await signInWithPassword(email.trim(), password)
-        : await signInWithMagicLink(email.trim());
+    let result;
+    if (mode === "password") {
+      result = await signInWithPassword(email.trim(), password);
+    } else if (mode === "magic") {
+      result = await signInWithMagicLink(email.trim());
+    } else {
+      result = await sendPasswordReset(email.trim());
+    }
 
     setSubmitting(false);
 
     if (result.error) {
-      setErrorMsg(result.error.message || "Couldn't sign in. Try again.");
+      setErrorMsg(result.error.message || "Something went wrong. Try again.");
       return;
     }
 
-    if (mode === "magic") {
-      setMagicSent(true);
-    }
+    if (mode === "magic") setMagicSent(true);
+    if (mode === "reset") setResetSent(true);
     // For password mode, onAuthStateChange flips the dashboard to the
     // signed-in view automatically — nothing more to do here.
   }
 
+  // ---- confirmation: magic link sent ----
   if (magicSent) {
     return (
       <div className="login-shell">
@@ -77,13 +85,89 @@ export default function Login() {
     );
   }
 
+  // ---- confirmation: reset link sent ----
+  if (resetSent) {
+    return (
+      <div className="login-shell">
+        <div className="login-card">
+          <div className="brand-mark">VPA</div>
+          <h1 className="login-title">Check your email</h1>
+          <p className="login-sub">
+            If <strong>{email}</strong> has an account, a password-reset link
+            is on its way. Open it on this device to choose a new password.
+          </p>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              setResetSent(false);
+              setMode("password");
+              setEmail("");
+            }}
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- reset-request screen ----
+  if (mode === "reset") {
+    return (
+      <div className="login-shell">
+        <div className="login-card">
+          <div className="brand-mark">VPA</div>
+          <h1 className="login-title">Reset your password</h1>
+          <p className="login-sub">
+            Enter your account email and we'll send you a link to set a new
+            password.
+          </p>
+
+          <form className="login-form" onSubmit={handleSubmit}>
+            <input
+              type="email"
+              className="login-input"
+              placeholder="email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="btn-primary login-submit"
+              disabled={submitting}
+            >
+              {submitting ? "Sending…" : "Send reset link"}
+            </button>
+            {errorMsg && <div className="login-error">{errorMsg}</div>}
+          </form>
+
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              setMode("password");
+              setErrorMsg("");
+            }}
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- main sign-in screen (password | magic) ----
   return (
     <div className="login-shell">
       <div className="login-card">
         <div className="brand-mark">VPA</div>
         <h1 className="login-title">Sign in</h1>
         <p className="login-sub">
-          Use your VPA student account. Same email and password as your reading
+          Use your VPA account — the same email and password as your reading
           and math apps.
         </p>
 
@@ -146,6 +230,20 @@ export default function Login() {
           </button>
           {errorMsg && <div className="login-error">{errorMsg}</div>}
         </form>
+
+        {mode === "password" && (
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              setMode("reset");
+              setErrorMsg("");
+              setPassword("");
+            }}
+          >
+            Forgot password?
+          </button>
+        )}
       </div>
     </div>
   );

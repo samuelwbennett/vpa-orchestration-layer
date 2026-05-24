@@ -8,6 +8,7 @@ import DailyRings from "./components/DailyRings.jsx";
 import TodayPlan from "./components/TodayPlan.jsx";
 import Insights from "./components/Insights.jsx";
 import Login from "./components/Login.jsx";
+import ResetPassword from "./components/ResetPassword.jsx";
 import AccountUnlinked from "./components/AccountUnlinked.jsx";
 import RolePlaceholder from "./components/RolePlaceholder.jsx";
 import TeacherView from "./components/TeacherView.jsx";
@@ -28,12 +29,28 @@ import { computeOnTrack } from "./utils/onTrack.js";
 // AppCard is redundant. Leaderboard was demo-only data.
 
 export default function App() {
-  const { session, profile, role, student, status, signOut, refresh: refreshAuth } =
-    useAuth();
+  const {
+    session,
+    profile,
+    role,
+    student,
+    status,
+    recovery,
+    clearRecovery,
+    signOut,
+    refresh: refreshAuth,
+  } = useAuth();
 
   // ---- Auth gates ----
   if (status === "loading") {
     return <FullScreenMessage>Loading…</FullScreenMessage>;
+  }
+  // A password-reset link takes priority over normal routing: show the
+  // set-a-new-password screen before anything else.
+  if (recovery) {
+    return (
+      <ResetPassword email={session?.user?.email} onDone={clearRecovery} />
+    );
   }
   if (status === "anonymous") {
     return <Login />;

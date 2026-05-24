@@ -14,8 +14,8 @@ export async function getSession() {
 export function onAuthChange(callback) {
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, newSession) => {
-    callback(newSession);
+  } = supabase.auth.onAuthStateChange((event, newSession) => {
+    callback(event, newSession);
   });
   return () => subscription.unsubscribe();
 }
@@ -29,6 +29,26 @@ export async function signInWithMagicLink(email) {
     email,
     options: { emailRedirectTo: window.location.origin + window.location.pathname },
   });
+}
+
+// Send a password-reset email. The link returns the user to this app
+// with a recovery token in the URL hash; the ?mode=reset-password query
+// param (which survives detectSessionInUrl, unlike the hash) is the
+// race-free signal that tells the app to show the new-password screen.
+export async function sendPasswordReset(email) {
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo:
+      window.location.origin +
+      window.location.pathname +
+      "?mode=reset-password",
+  });
+}
+
+// Set a new password for the currently-signed-in user. Used by the
+// reset-password screen — the recovery link has already established a
+// session, so no old password is required.
+export async function updatePassword(newPassword) {
+  return supabase.auth.updateUser({ password: newPassword });
 }
 
 export async function signOut() {

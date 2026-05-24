@@ -2,13 +2,15 @@
 // useAuth — role-aware auth lifecycle for the VPA Learning OS.
 // -----------------------------------------------------
 // Returns:
-//   - session:  Supabase session or null
-//   - role:     "student" | "teacher" | "admin" | "parent" | null
-//   - profile:  the user_profiles row, or null (bridge / fallback)
-//   - student:  the linked students row (populated when role === "student")
-//   - status:   "loading" | "anonymous" | "unlinked" | "ready"
-//   - signOut:  helper to sign out
-//   - refresh:  re-resolve the signed-in user (e.g. after provisioning)
+//   - session:       Supabase session or null
+//   - role:          "student" | "teacher" | "admin" | "parent" | null
+//   - profile:       the user_profiles row, or null (bridge / fallback)
+//   - student:       the linked students row (when role === "student")
+//   - status:        "loading" | "anonymous" | "unlinked" | "ready"
+//   - recovery:      true when the user arrived via a password-reset link
+//   - clearRecovery: dismiss the reset-password screen
+//   - signOut:       helper to sign out
+//   - refresh:       re-resolve the signed-in user (e.g. after provisioning)
 //
 // Role resolution goes through the server-controlled /api/provision-self
 // endpoint: it's idempotent, creates the user_profiles row on first
@@ -26,12 +28,25 @@ import {
   fetchLinkedStudent,
 } from "../services/auth.js";
 
+// A password-reset link returns the user here with ?mode=reset-password
+// in the query string. detectSessionInUrl only consumes the URL *hash*,
+// so this query param survives — a race-free signal that we should show
+// the set-a-new-password screen instead of the normal dashboard.
+function detectRecoveryFromUrl() {
+  if (typeof window === "undefined") return false;
+  return (
+    new URLSearchParams(window.location.search).get("mode") ===
+    "reset-password"
+  );
+}
+
 export function useAuth() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [role, setRole] = useState(null);
   const [student, setStudent] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [recovery, setRecovery] = useState(detectRecoveryFromUrl);
   const mountedRef = useRef(true);
 
   const resolve = useCallback(async (sess) => {
@@ -96,8 +111,11 @@ export function useAuth() {
       await resolve(sess);
     })();
 
-    unsubscribe = onAuthChange(async (newSession) => {
+    unsubscribe = onAuthChange(async (event, newSession) => {
       if (!mountedRef.current) return;
+      // Supabase fires PASSWORD_RECOVERY when a recovery link is
+      // processed — a backup to the URL check in initial state.
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
       setSession(newSession);
       await resolve(newSession);
     });
@@ -117,5 +135,28 @@ export function useAuth() {
     await resolve(session);
   }, [resolve, session]);
 
-  return { session, profile, role, student, status, signOut, refresh };
+  // Leave the reset-password screen: clear the flag and strip the
+  // ?mode=reset-password param so a refresh doesn't re-trigger it.
+  const clearRecovery = useCallback(() => {
+    setRecovery(false);
+    if (typeof window !== "undefined") {
+      const clean =
+        window.location.origin +
+        window.location.pathname +
+        window.location.hash;
+      window.history.replaceState({}, "", clean);
+    }
+  }, []);
+
+  return {
+    session,
+    profile,
+    role,
+    student,
+    status,
+    recovery,
+    clearRecovery,
+    signOut,
+    refresh,
+  };
 }
