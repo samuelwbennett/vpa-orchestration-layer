@@ -11,7 +11,7 @@ import { updatePassword } from "../services/auth.js";
  */
 const MIN_LENGTH = 8;
 
-export default function ResetPassword({ email, onDone }) {
+export default function ResetPassword({ email, onDone, onCancel }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -117,6 +117,17 @@ export default function ResetPassword({ email, onDone }) {
           </button>
           {errorMsg && <div className="login-error">{errorMsg}</div>}
         </form>
+
+        {/* Escape hatch: this screen renders whenever the URL carries
+            ?mode=reset-password — including for someone who has no
+            active recovery session and can't actually set a password
+            here. Without this link they'd be stranded on a dead-end
+            form. Clears the recovery flag and returns to sign-in. */}
+        {onCancel && (
+          <button type="button" className="link-btn" onClick={onCancel}>
+            Back to sign in
+          </button>
+        )}
       </div>
     </div>
   );

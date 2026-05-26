@@ -55,16 +55,18 @@ export async function fetchSnapshot({ signal, studentId } = {}) {
       nextLesson: data.nextDrill?.label || null
     };
   } catch (err) {
-    console.warn("[readingFacts] snapshot endpoint unavailable, using mock:", err);
+    console.warn("[readingFacts] snapshot endpoint unavailable, degrading:", err);
+    // Degraded fallback must not fabricate progress (no fake weekly
+    // XP, no fake next-lesson). Fail toward "nothing earned yet".
     return {
       id: APP_ID,
       name: APP_NAME,
-      dailyGoal: 30,
+      dailyGoal: dailyGoalFallback,
       todayXP: 0,
-      weeklyXP: 90,
+      weeklyXP: 0,
       status: "ready",
       link: baseUrl, // launch still works — sends them to the live app
-      nextLesson: "Phonics: short-vowel review",
+      nextLesson: null,
       _degraded: true
     };
   }

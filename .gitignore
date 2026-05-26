@@ -6,3 +6,6 @@ dist-*
 *.log
 vite.config.js.timestamp-*.mjs
 .vercel
+.env
+.env.local
+.env.*.local

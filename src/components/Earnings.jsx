@@ -35,6 +35,19 @@ export default function Earnings({ data, loading, error, redeem, studentId }) {
   }
   if (!data) return null;
 
+  // Defensive: the incentives proxy should always return
+  // { earnings, rules, ... }, but a malformed/partial response would
+  // otherwise throw on the destructured field access below and (via
+  // the app-level ErrorBoundary) blank the whole dashboard over one
+  // card. Degrade to a quiet inline message instead.
+  if (!data.earnings || !data.rules) {
+    return (
+      <div className="card" style={{ color: "var(--text-muted)" }}>
+        Earnings are temporarily unavailable.
+      </div>
+    );
+  }
+
   const { earnings, rules, redemptions } = data;
   const pendingRedemptions = data.pendingRedemptions || [];
   const minRedemption = Number(rules.minRedemptionDollars) || 0;

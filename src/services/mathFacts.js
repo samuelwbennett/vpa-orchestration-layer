@@ -55,14 +55,20 @@ export async function fetchSnapshot({ signal, studentId } = {}) {
       nextLesson: data.nextDrill?.label || null
     };
   } catch (err) {
-    console.warn("[mathFacts] snapshot endpoint unavailable, using mock:", err);
+    console.warn("[mathFacts] snapshot endpoint unavailable, degrading:", err);
+    // Degraded fallback must NOT fabricate progress. Earlier this
+    // returned a fake "complete 30/30" snapshot, which made every
+    // student look done on the dashboard AND silently emptied the
+    // teacher/admin intervention queue whenever this backend was
+    // down. Fail toward "nothing earned yet" so a real outage is
+    // visible rather than masked.
     return {
       id: APP_ID,
       name: APP_NAME,
-      dailyGoal: 30,
-      todayXP: 30,
-      weeklyXP: 180,
-      status: "complete",
+      dailyGoal: dailyGoalFallback,
+      todayXP: 0,
+      weeklyXP: 0,
+      status: "ready",
       link: baseUrl, // launch still works — sends them to the live app
       nextLesson: null,
       _degraded: true

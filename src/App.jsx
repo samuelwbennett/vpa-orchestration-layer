@@ -49,7 +49,11 @@ export default function App() {
   // set-a-new-password screen before anything else.
   if (recovery) {
     return (
-      <ResetPassword email={session?.user?.email} onDone={clearRecovery} />
+      <ResetPassword
+        email={session?.user?.email}
+        onDone={clearRecovery}
+        onCancel={clearRecovery}
+      />
     );
   }
   if (status === "anonymous") {
@@ -65,10 +69,10 @@ export default function App() {
   }
 
   // ---- Role routing (status === "ready") ----
-  // Student gets the existing dashboard; teacher / admin / parent get
-  // a clean placeholder until their views ship in later blueprint
-  // steps. A role we don't recognize is treated like an unlinked
-  // account rather than crashing.
+  // Each role gets its own full view: student dashboard, teacher
+  // roster, admin overview, parent family view. A role we don't
+  // recognize is treated like an unlinked account rather than
+  // crashing.
   if (role === "student") {
     return <SignedInDashboard student={student} signOut={signOut} />;
   }
@@ -117,6 +121,13 @@ function SignedInDashboard({ student, signOut }) {
 
   const { status: trackStatus, label: trackLabel } = computeOnTrack(apps);
 
+  // Apps whose adapter fell back to a degraded (offline) snapshot.
+  // Surfacing this matters: without it, a down learning-app backend
+  // shows up on the dashboard as silent zeros that look identical to
+  // a real "haven't started yet" — the student/parent can't tell the
+  // difference between "do your work" and "the app is broken".
+  const degradedApps = apps.filter((a) => a && a._degraded);
+
   return (
     <div className="app-shell">
       <Header
@@ -133,6 +144,17 @@ function SignedInDashboard({ student, signOut }) {
         <div className="section">
           <div className="card" style={{ color: "var(--red)" }}>
             Some apps couldn't be reached. Showing the most recent data we have.
+          </div>
+        </div>
+      )}
+
+      {!error && degradedApps.length > 0 && (
+        <div className="section">
+          <div className="card" style={{ color: "var(--text-muted)" }}>
+            We couldn't reach{" "}
+            {degradedApps.map((a) => a.name).join(", ")} just now — today's
+            numbers for {degradedApps.length === 1 ? "it" : "those"} may be
+            out of date. Try Refresh in a minute.
           </div>
         </div>
       )}
