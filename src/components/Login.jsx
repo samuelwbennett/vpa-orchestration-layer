@@ -5,6 +5,19 @@ import {
   sendPasswordReset,
 } from "../services/auth.js";
 
+// Students log in with a bare username (e.g. "jacksonleever") and have a
+// synthesized, non-deliverable email on file. Teachers/admins use their
+// real email. Normalize: if the entered value has no "@", treat it as a
+// student username and append the student domain. Anything containing
+// "@" is passed through untouched (real email).
+const STUDENT_EMAIL_DOMAIN = "@students.elevateedwards.com";
+
+function toLoginEmail(value) {
+  const v = value.trim().toLowerCase();
+  if (!v) return v;
+  return v.includes("@") ? v : v + STUDENT_EMAIL_DOMAIN;
+}
+
 /**
  * Login — email + password with a magic-link fallback and a
  * "Forgot password?" flow that emails a reset link.
@@ -39,7 +52,7 @@ export default function Login() {
 
     let result;
     if (mode === "password") {
-      result = await signInWithPassword(email.trim(), password);
+      result = await signInWithPassword(toLoginEmail(email), password);
     } else if (mode === "magic") {
       result = await signInWithMagicLink(email.trim());
     } else {
@@ -167,7 +180,7 @@ export default function Login() {
         <div className="brand-mark">VPA</div>
         <h1 className="login-title">Sign in</h1>
         <p className="login-sub">
-          Use your VPA account — the same email and password as your reading
+          Use your VPA account — the same username and password as your reading
           and math apps.
         </p>
 
@@ -196,12 +209,17 @@ export default function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <input
-            type="email"
+            type={mode === "password" ? "text" : "email"}
             className="login-input"
-            placeholder="email@example.com"
+            placeholder={
+              mode === "password" ? "Username or email" : "email@example.com"
+            }
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             required
             autoFocus
           />
