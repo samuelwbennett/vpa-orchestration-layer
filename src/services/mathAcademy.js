@@ -52,10 +52,13 @@ export async function fetchSnapshot({ signal, studentId } = {}) {
 
   try {
     const data = await getJSON(url, { signal });
-    // VPA pins the Math Academy daily goal to 30 XP regardless of
-    // what's configured inside Math Academy's own per-weekday
-    // schedule. Ignore data.dailyGoalXp on purpose.
-    const dailyGoal = dailyGoalFallback;
+    // Use the student's real per-weekday goal from Math Academy's own
+    // schedule (the proxy returns it as dailyGoalXp via pickTodayGoal).
+    // A value of 0 means a configured rest day, which the rings render
+    // as "Rest day" — so `??` (not `||`) is deliberate: only fall back
+    // to the configured default when the proxy OMITS the goal entirely
+    // (degraded/offline), never when it legitimately reports 0.
+    const dailyGoal = data.dailyGoalXp ?? dailyGoalFallback;
     const todayXP = Math.round(data.todayXp ?? 0);
 
     return {

@@ -31,9 +31,10 @@ export const config = {
       env.VITE_MA_DEEP_LINK || "https://www.mathacademy.com",
     studentId:
       env.VITE_MA_STUDENT_ID || env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6",
-    // VPA's target for Math Academy is 30 XP/day, regardless of
-    // what's set inside Math Academy itself. The adapter pins this
-    // value rather than reading dailyGoalXp from the proxy.
+    // Fallback only: the adapter now reads each student's real
+    // per-weekday goal from Math Academy (the proxy's dailyGoalXp).
+    // This value is used solely when the proxy can't supply a goal
+    // (degraded/offline). A 0 from MA is a real rest day, not a fallback.
     dailyGoalFallback: 30
   },
 
