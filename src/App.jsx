@@ -7,6 +7,8 @@ import Header from "./components/Header.jsx";
 import DailyRings from "./components/DailyRings.jsx";
 import TodayPlan from "./components/TodayPlan.jsx";
 import Insights from "./components/Insights.jsx";
+import KnowledgeGraph from "./components/KnowledgeGraph.jsx";
+import { useStudentKnowledge } from "./hooks/useStudentKnowledge.js";
 import Login from "./components/Login.jsx";
 import ResetPassword from "./components/ResetPassword.jsx";
 import AccountUnlinked from "./components/AccountUnlinked.jsx";
@@ -97,6 +99,7 @@ function SignedInDashboard({ student, signOut }) {
   const { weeklyHistory } = studentDemoData;
   const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot(student.id);
   const incentives = useIncentives(student.id);
+  const knowledgeState = useStudentKnowledge(student.id);
 
   if (!apps) {
     return (
@@ -189,6 +192,15 @@ function SignedInDashboard({ student, signOut }) {
       {/* Insights — behavioral warnings and "you're behind" copy */}
       <section className="section">
         <Insights apps={apps} weeklyHistory={weeklyHistory} />
+      </section>
+
+      {/* Knowledge Graph — per-topic mastery from Math Academy Beta 9 */}
+      <section className="section">
+        <h2 className="section-title">Knowledge Graph</h2>
+        <KnowledgeGraph
+          knowledge={knowledgeState.knowledge}
+          loading={knowledgeState.loading}
+        />
       </section>
     </div>
   );
