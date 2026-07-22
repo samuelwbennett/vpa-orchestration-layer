@@ -7,8 +7,9 @@
 //   https://math-facts-trainer.vercel.app/api/math-academy/snapshot
 //
 // The proxy holds our partner Public-API-Key server-side and queries
-// Math Academy's official Beta 5 partner API on our behalf. The
-// browser never sees the MA key.
+// Math Academy's official partner API on our behalf (Beta 5 for the
+// original endpoints; the knowledge-profile endpoint below targets
+// Beta 9's getStudentKnowledge). The browser never sees the MA key.
 //
 // === Backend contract (mirrors mathFacts / readingFacts) ===
 //
@@ -112,6 +113,7 @@ function deriveStatus(today, goal) {
 const MASTERY_PATH = "/api/math-academy/mastery";
 const TODAY_PATH = "/api/math-academy/today";
 const XP_PATH = "/api/math-academy/xp";
+const KNOWLEDGE_PATH = "/api/math-academy/knowledge";
 
 // Contract v1.0 — Math Academy top recommendation. Same shape as
 // the other apps' fetchToday. Deep links go to mathacademy.com,
@@ -202,4 +204,118 @@ export async function fetchMastery({ signal, studentId } = {}) {
       _degraded: true,
     };
   }
+}
+
+// =====================================================
+// Knowledge profile — MA partner API Beta 9, getStudentKnowledge
+// -----------------------------------------------------
+// Beta 9 adds a per-student knowledge profile via the
+// getStudentKnowledge endpoint. As with every other MA call, the
+// browser talks only to our proxy; the proxy calls Beta 9 with the
+// server-side Public-API-Key and normalizes the response to:
+//
+//   GET {apiBaseUrl}/api/math-academy/knowledge?student=<vpa-student-uuid>
+//
+//   Response 200 (application/json):
+//   {
+//     "asOf":    string|null,        // ISO timestamp of the profile
+//     "course":  {                   // current course context
+//       "id": string, "name": string, "percentComplete": number
+//     } | null,
+//     "topics": [{                   // per-topic knowledge state
+//       "id":              string,
+//       "name":            string,
+//       "unit":            string|null,
+//       "mastery":         number,   // 0–100
+//       "state":           "mastered"|"learning"|"review"|"not_started",
+//       "lastPracticedAt": string|null
+//     }],
+//     "summary": {                   // counts derived by the proxy
+//       "mastered": n, "learning": n, "review": n,
+//       "notStarted": n, "total": n
+//     },
+//     "_notLinked": boolean          // no math_academy row for student
+//   }
+//
+// NOTE: field names inside `topics` are our proxy's normalized shape,
+// not MA's raw payload — adjust the proxy (not this adapter) if the
+// real Beta 9 response differs. Parsing here is deliberately
+// defensive so contract drift degrades instead of crashing the UI.
+export async function fetchKnowledge({ signal, studentId } = {}) {
+  const { apiBaseUrl } = config.mathAcademy;
+  const sid = studentId || config.mathAcademy.studentId;
+  const url = `${apiBaseUrl}${KNOWLEDGE_PATH}?student=${encodeURIComponent(sid)}`;
+
+  try {
+    const data = await getJSON(url, { signal });
+    const topics = (Array.isArray(data?.topics) ? data.topics : []).map(
+      (t) => ({
+        id: String(t?.id ?? ""),
+        name: String(t?.name ?? ""),
+        unit: t?.unit ?? null,
+        mastery: clampPct(t?.mastery),
+        state: KNOWLEDGE_STATES.has(t?.state) ? t.state : "not_started",
+        lastPracticedAt: t?.lastPracticedAt || null,
+      })
+    );
+
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      asOf: data?.asOf || null,
+      course: data?.course
+        ? {
+            id: String(data.course.id ?? ""),
+            name: String(data.course.name ?? ""),
+            percentComplete: clampPct(data.course.percentComplete),
+          }
+        : null,
+      topics,
+      summary: data?.summary || summarizeTopics(topics),
+      _notLinked: !!data?._notLinked,
+    };
+  } catch (err) {
+    console.warn("[mathAcademy] knowledge endpoint unavailable:", err);
+    return {
+      id: APP_ID,
+      name: APP_NAME,
+      asOf: null,
+      course: null,
+      topics: [],
+      summary: summarizeTopics([]),
+      _degraded: true,
+    };
+  }
+}
+
+const KNOWLEDGE_STATES = new Set([
+  "mastered",
+  "learning",
+  "review",
+  "not_started",
+]);
+
+function clampPct(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
+// Fallback when the proxy omits `summary` — derive counts locally so
+// consumers can always rely on the field being present.
+function summarizeTopics(topics) {
+  const summary = {
+    mastered: 0,
+    learning: 0,
+    review: 0,
+    notStarted: 0,
+    total: topics.length,
+  };
+  for (const t of topics) {
+    if (t.state === "mastered") summary.mastered++;
+    else if (t.state === "learning") summary.learning++;
+    else if (t.state === "review") summary.review++;
+    else summary.notStarted++;
+  }
+  return summary;
 }

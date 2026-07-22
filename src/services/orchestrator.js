@@ -66,6 +66,36 @@ export async function fetchAllMastery({ signal, studentId } = {}) {
     });
 }
 
+// Knowledge profile — currently Math Academy only (partner API
+// Beta 9, getStudentKnowledge, via the proxy). Kept in the
+// orchestrator rather than called from the UI directly so that when
+// other apps grow an equivalent endpoint, this fans out exactly like
+// fetchAllMastery without touching any component.
+//
+// Returns array of { id, name, asOf, course, topics, summary } in
+// adapter display order; apps without fetchKnowledge() contribute
+// nothing.
+export async function fetchAllKnowledge({ signal, studentId } = {}) {
+  const results = await Promise.allSettled(
+    ADAPTERS.map(({ impl }) =>
+      typeof impl.fetchKnowledge === "function"
+        ? impl.fetchKnowledge({ signal, studentId })
+        : Promise.resolve(null)
+    )
+  );
+
+  return results
+    .map((r, i) => {
+      if (r.status === "fulfilled") return r.value;
+      console.error(
+        `[orchestrator] ${ADAPTERS[i].key} knowledge failed:`,
+        r.reason
+      );
+      return null;
+    })
+    .filter(Boolean);
+}
+
 // =====================================================
 // Contract v1.0 endpoints — today + xp
 // -----------------------------------------------------

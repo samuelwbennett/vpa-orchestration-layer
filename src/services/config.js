@@ -12,7 +12,10 @@ export const config = {
   // dashboard shows live data without any .env.local setup.
   studentId: env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6",
 
-  // ----- Math Academy (official Beta 5 partner API, via proxy) -----
+  // ----- Math Academy (official partner API, via proxy) -----
+  // Beta 5 for snapshot/today/xp/mastery; the knowledge profile
+  // (services/mathAcademy.js fetchKnowledge) rides the proxy's
+  // Beta 9 getStudentKnowledge integration.
   // The MA Public-API-Key lives server-side on the math-facts-trainer
   // Vercel project. The browser only talks to our proxy.
   //
