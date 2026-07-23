@@ -129,25 +129,33 @@ function UnitGroup({ unit, topics }) {
 }
 
 function TopicRow({ topic }) {
-  const pct = Math.min(100, Math.max(0, Number(topic.mastery) || 0));
+  // mastery is null when the provider gave no usable number — render
+  // the state chip as the primary signal instead of faking 0%.
+  const hasPct = topic.mastery != null && Number.isFinite(Number(topic.mastery));
+  const pct = hasPct ? Math.min(100, Math.max(0, Number(topic.mastery))) : null;
   return (
     <div
       className="kg-row"
       role="listitem"
-      aria-label={`${topic.name}: ${pct} percent mastered, ${stateLabel(
-        topic.state
-      ).toLowerCase()}`}
+      aria-label={`${topic.name}: ${
+        hasPct ? `${pct} percent mastered` : "mastery not reported"
+      }, ${stateLabel(topic).toLowerCase()}`}
       title={tooltipText(topic, pct)}
     >
       <span className="kg-topic-name">{topic.name}</span>
-      <span className="kg-bar-track" aria-hidden="true">
-        <span
-          className="kg-bar-fill"
-          style={{ width: `${pct}%`, background: BAR_COLOR }}
-        />
+      <span
+        className={`kg-bar-track ${hasPct ? "" : "kg-bar-track-empty"}`}
+        aria-hidden="true"
+      >
+        {hasPct && (
+          <span
+            className="kg-bar-fill"
+            style={{ width: `${pct}%`, background: BAR_COLOR }}
+          />
+        )}
       </span>
-      <span className="kg-pct">{pct}%</span>
-      <StateChip state={topic.state} />
+      <span className="kg-pct">{hasPct ? `${pct}%` : "—"}</span>
+      <StateChip topic={topic} />
     </div>
   );
 }
@@ -155,15 +163,20 @@ function TopicRow({ topic }) {
 function SummaryStrip({ summary }) {
   if (!summary) return null;
   const items = [
-    { label: "Mastered", value: summary.mastered, cls: "kg-chip-mastered" },
-    { label: "Learning", value: summary.learning, cls: "kg-chip-learning" },
-    { label: "Review", value: summary.review, cls: "kg-chip-review" },
-    { label: "Not started", value: summary.notStarted, cls: "kg-chip-notstarted" },
+    { label: "Mastered", value: summary.mastered },
+    { label: "Learning", value: summary.learning },
+    { label: "Review", value: summary.review },
+    { label: "Not started", value: summary.notStarted },
+    // Topics whose provider state we haven't mapped yet — only shown
+    // when present so the strip stays calm in the common case.
+    ...(summary.unknown > 0
+      ? [{ label: "Other", value: summary.unknown }]
+      : []),
   ];
   return (
     <div className="kg-summary">
       {items.map((i) => (
-        <span key={i.label} className={`kg-summary-item ${i.cls}`}>
+        <span key={i.label} className="kg-summary-item">
           <strong>{i.value}</strong> {i.label}
         </span>
       ))}
@@ -171,9 +184,11 @@ function SummaryStrip({ summary }) {
   );
 }
 
-function StateChip({ state }) {
-  const label = stateLabel(state);
-  return <span className={`kg-state kg-state-${state}`}>{label}</span>;
+function StateChip({ topic }) {
+  const state = topic.state || "unknown";
+  return (
+    <span className={`kg-state kg-state-${state}`}>{stateLabel(topic)}</span>
+  );
 }
 
 function UnavailableCard({ appName }) {
@@ -191,7 +206,7 @@ function UnavailableCard({ appName }) {
 function groupByUnit(topics) {
   const map = new Map();
   for (const t of topics) {
-    const unit = t.unit || "Course topics";
+    const unit = t.unitName || t.unit || "Course topics";
     if (!map.has(unit)) map.set(unit, []);
     map.get(unit).push(t);
   }
@@ -201,21 +216,36 @@ function groupByUnit(topics) {
   }));
 }
 
-function stateLabel(state) {
-  switch (state) {
+function stateLabel(topic) {
+  switch (topic.state) {
     case "mastered":
       return "Mastered";
     case "learning":
       return "Learning";
     case "review":
       return "Review";
-    default:
+    case "not_started":
       return "Not started";
+    default:
+      // Unmapped provider state: show the provider's own word rather
+      // than mislabeling it, e.g. "Conditionally completed".
+      return topic.providerState
+        ? prettifyState(topic.providerState)
+        : "In progress";
   }
 }
 
+function prettifyState(s) {
+  const words = String(s).replace(/[_-]+/g, " ").trim().toLowerCase();
+  const label = words.charAt(0).toUpperCase() + words.slice(1);
+  return label.length > 22 ? `${label.slice(0, 21)}…` : label;
+}
+
 function tooltipText(topic, pct) {
-  const parts = [`${topic.name} — ${pct}% mastered`, stateLabel(topic.state)];
+  const parts = [
+    pct != null ? `${topic.name} — ${pct}% mastered` : topic.name,
+    stateLabel(topic),
+  ];
   if (topic.lastPracticedAt) {
     parts.push(`Last practiced ${formatAsOf(topic.lastPracticedAt)}`);
   }
