@@ -2465,3 +2465,26 @@ a { color: inherit; text-decoration: none; }
   .kg-row { grid-template-columns: minmax(100px, 1fr) 1fr 40px; }
   .kg-state { display: none; }
 }
+
+/* Knowledge Graph — unmapped provider state + missing mastery */
+.kg-state {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kg-state-unknown {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+}
+
+.kg-bar-track-empty {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--ring-track),
+    var(--ring-track) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
