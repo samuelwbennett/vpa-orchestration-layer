@@ -225,14 +225,21 @@ export async function fetchMastery({ signal, studentId } = {}) {
 //     "topics": [{                   // per-topic knowledge state
 //       "id":              string,
 //       "name":            string,
-//       "unit":            string|null,
-//       "mastery":         number,   // 0–100
-//       "state":           "mastered"|"learning"|"review"|"not_started",
+//       "unitId":          string|null,
+//       "unitName":        string|null,
+//       "mastery":         number|null,  // 0–100; null = provider gave
+//                                        // no usable number (render the
+//                                        // state, don't fake a 0)
+//       "masteryRaw":      any,          // provider value, untouched
+//       "state":           "mastered"|"learning"|"review"|"not_started"|"unknown",
+//       "providerState":   string|null,  // provider's raw state — kept
+//                                        // verbatim so unfamiliar Beta 9
+//                                        // states aren't force-bucketed
 //       "lastPracticedAt": string|null
 //     }],
 //     "summary": {                   // counts derived by the proxy
 //       "mastered": n, "learning": n, "review": n,
-//       "notStarted": n, "total": n
+//       "notStarted": n, "unknown": n, "total": n
 //     },
 //     "_notLinked": boolean          // no math_academy row for student
 //   }
@@ -252,9 +259,14 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
       (t) => ({
         id: String(t?.id ?? ""),
         name: String(t?.name ?? ""),
-        unit: t?.unit ?? null,
-        mastery: clampPct(t?.mastery),
-        state: KNOWLEDGE_STATES.has(t?.state) ? t.state : "not_started",
+        unitId: t?.unitId ?? null,
+        unitName: t?.unitName ?? t?.unit ?? null,
+        // null = provider gave no usable number; the UI renders the
+        // state chip instead of manufacturing 0%.
+        mastery: clampPctOrNull(t?.mastery),
+        masteryRaw: t?.masteryRaw ?? t?.mastery ?? null,
+        state: KNOWLEDGE_STATES.has(t?.state) ? t.state : "unknown",
+        providerState: t?.providerState ?? null,
         lastPracticedAt: t?.lastPracticedAt || null,
       })
     );
@@ -293,11 +305,13 @@ const KNOWLEDGE_STATES = new Set([
   "learning",
   "review",
   "not_started",
+  "unknown",
 ]);
 
-function clampPct(v) {
+function clampPctOrNull(v) {
+  if (v == null || v === "") return null;
   const n = Number(v);
-  if (!Number.isFinite(n)) return 0;
+  if (!Number.isFinite(n)) return null;
   return Math.min(100, Math.max(0, Math.round(n)));
 }
 
@@ -309,13 +323,15 @@ function summarizeTopics(topics) {
     learning: 0,
     review: 0,
     notStarted: 0,
+    unknown: 0,
     total: topics.length,
   };
   for (const t of topics) {
     if (t.state === "mastered") summary.mastered++;
     else if (t.state === "learning") summary.learning++;
     else if (t.state === "review") summary.review++;
-    else summary.notStarted++;
+    else if (t.state === "not_started") summary.notStarted++;
+    else summary.unknown++;
   }
   return summary;
 }
