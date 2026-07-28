@@ -259,6 +259,11 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
       (t) => ({
         id: String(t?.id ?? ""),
         name: String(t?.name ?? ""),
+        // Beta 9 returns every course in the student's knowledge
+        // profile (current + foundational), so topics carry their
+        // course context for grouping.
+        courseId: t?.courseId ?? null,
+        courseName: t?.courseName ?? null,
         unitId: t?.unitId ?? null,
         unitName: t?.unitName ?? t?.unit ?? null,
         // null = provider gave no usable number; the UI renders the
