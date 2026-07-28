@@ -54,6 +54,15 @@ function AppKnowledge({ app }) {
       </div>
     );
   }
+  if (app._licenseInactive) {
+    return (
+      <div className="card" style={{ color: "var(--text-muted)" }}>
+        This student's {app.name} license isn't active right now, so the
+        knowledge profile can't be loaded. Everything else on this page is
+        unaffected.
+      </div>
+    );
+  }
   if (app._degraded || !app.topics || app.topics.length === 0) {
     return <UnavailableCard appName={app.name} />;
   }
