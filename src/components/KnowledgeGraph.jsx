@@ -213,9 +213,19 @@ function UnavailableCard({ appName }) {
 // ---- helpers ----
 
 function groupByUnit(topics) {
+  // Beta 9 spans multiple courses (current + foundational). When more
+  // than one course is present, prefix group titles with the course
+  // so identical unit names (e.g. "The Number System") don't merge.
+  const courseNames = new Set(
+    topics.map((t) => t.courseName).filter(Boolean)
+  );
+  const multiCourse = courseNames.size > 1;
+
   const map = new Map();
   for (const t of topics) {
-    const unit = t.unitName || t.unit || "Course topics";
+    const unitName = t.unitName || t.unit || "Course topics";
+    const unit =
+      multiCourse && t.courseName ? `${t.courseName} · ${unitName}` : unitName;
     if (!map.has(unit)) map.set(unit, []);
     map.get(unit).push(t);
   }
