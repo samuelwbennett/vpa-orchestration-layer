@@ -285,6 +285,11 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
       topics,
       summary: data?.summary || summarizeTopics(topics),
       _notLinked: !!data?._notLinked,
+      // Per-student condition from MA: the student's license was
+      // canceled. Beta 9 signals this as a 401; the proxy converts
+      // it to this flag so the UI can say so honestly.
+      _licenseInactive: !!data?._licenseInactive,
+      _noCourse: !!data?._noCourse,
     };
   } catch (err) {
     console.warn("[mathAcademy] knowledge endpoint unavailable:", err);
