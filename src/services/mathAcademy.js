@@ -259,13 +259,14 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
     // serverless start can exceed getJSON's default 8s timeout. That
     // manifested as the Knowledge Graph "randomly" showing the
     // unavailable card for a whole 5-minute poll cycle. Generous
-    // timeout + one retry make first paint reliable.
+    // timeout + one retry make first paint reliable. (45s: MA has
+    // been observed taking 20s+ per call; the proxy also caches.)
     let data;
     try {
-      data = await getJSON(url, { signal, timeoutMs: 25000 });
+      data = await getJSON(url, { signal, timeoutMs: 45000 });
     } catch (firstErr) {
       if (signal?.aborted) throw firstErr;
-      data = await getJSON(url, { signal, timeoutMs: 25000 });
+      data = await getJSON(url, { signal, timeoutMs: 45000 });
     }
     const topics = (Array.isArray(data?.topics) ? data.topics : []).map(
       (t) => ({
@@ -297,6 +298,11 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
             id: String(data.course.id ?? ""),
             name: String(data.course.name ?? ""),
             percentComplete: clampPctOrNull(data.course.percentComplete),
+            // XP left to finish the course (MA-provided; null when
+            // the proxy or MA omits it).
+            xpRemaining: Number.isFinite(Number(data.course.xpRemaining))
+              ? Math.round(Number(data.course.xpRemaining))
+              : null,
           }
         : null,
       topics,
