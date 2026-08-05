@@ -80,6 +80,9 @@ function AppKnowledge({ app }) {
               {Number.isFinite(app.course.percentComplete)
                 ? ` — ${app.course.percentComplete}% complete`
                 : ""}
+              {Number.isFinite(app.course.xpRemaining)
+                ? ` · ${app.course.xpRemaining.toLocaleString()} XP remaining`
+                : ""}
             </div>
           )}
         </div>
