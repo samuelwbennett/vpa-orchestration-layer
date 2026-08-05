@@ -284,7 +284,7 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
         ? {
             id: String(data.course.id ?? ""),
             name: String(data.course.name ?? ""),
-            percentComplete: clampPct(data.course.percentComplete),
+            percentComplete: clampPctOrNull(data.course.percentComplete),
           }
         : null,
       topics,
