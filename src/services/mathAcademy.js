@@ -254,7 +254,19 @@ export async function fetchKnowledge({ signal, studentId } = {}) {
   const url = `${apiBaseUrl}${KNOWLEDGE_PATH}?student=${encodeURIComponent(sid)}`;
 
   try {
-    const data = await getJSON(url, { signal });
+    // This is the heaviest adapter call: the proxy makes TWO upstream
+    // Math Academy requests and returns hundreds of topics, and a cold
+    // serverless start can exceed getJSON's default 8s timeout. That
+    // manifested as the Knowledge Graph "randomly" showing the
+    // unavailable card for a whole 5-minute poll cycle. Generous
+    // timeout + one retry make first paint reliable.
+    let data;
+    try {
+      data = await getJSON(url, { signal, timeoutMs: 25000 });
+    } catch (firstErr) {
+      if (signal?.aborted) throw firstErr;
+      data = await getJSON(url, { signal, timeoutMs: 25000 });
+    }
     const topics = (Array.isArray(data?.topics) ? data.topics : []).map(
       (t) => ({
         id: String(t?.id ?? ""),
