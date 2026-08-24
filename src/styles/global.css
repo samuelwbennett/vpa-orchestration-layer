@@ -30,6 +30,7 @@
   --ring-math-academy: #0a84ff;     /* iOS blue */
   --ring-reading-facts: #30d158;    /* iOS green */
   --ring-reading-academy: #bf5af2;  /* iOS purple */
+  --ring-asu-prep: #8c1d40;         /* ASU maroon */
 
   --ring-track: #ececf0;
 
@@ -207,7 +208,9 @@ a { color: inherit; text-decoration: none; }
 
 .rings-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* auto-fit: lays out however many apps are enabled (3 today —
+     Math Academy, Math Facts, ASU Prep) without a hard column count. */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 24px;
   padding: 4px 0;
 }
@@ -2466,25 +2469,113 @@ a { color: inherit; text-decoration: none; }
   .kg-state { display: none; }
 }
 
-/* Knowledge Graph — unmapped provider state + missing mastery */
-.kg-state {
-  max-width: 100%;
+/* =====================================================
+   Schedule panel (Jackson's day — live from the Google Sheet)
+   ===================================================== */
+.schedule-card { padding: 22px 24px; }
+
+.schedule-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.schedule-date {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.schedule-note {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--yellow);
+  font-weight: 500;
+}
+.schedule-sheet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.schedule-sheet-link:hover { color: var(--blue); }
+
+.schedule-blocks {
+  display: flex;
+  flex-direction: column;
+}
+.schedule-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.schedule-block:last-child { border-bottom: none; }
+.schedule-block-icon {
+  display: inline-flex;
+  color: var(--text-subtle);
+  flex: 0 0 auto;
+}
+.schedule-block-label {
+  flex: 0 0 108px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.schedule-block-value { flex: 1 1 auto; }
+.schedule-block.muted .schedule-block-value { color: var(--text-subtle); }
+.schedule-block.gold .schedule-block-value { color: var(--yellow); font-weight: 500; }
+.schedule-block.orange .schedule-block-value { color: #ff7a00; font-weight: 500; }
+
+.schedule-join {
+  padding: 5px 14px;
+  font-size: 13px;
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+
+.schedule-weekend {
+  padding: 8px 0 2px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.schedule-upcoming {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.schedule-upcoming-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-subtle);
+  margin-bottom: 6px;
+}
+.schedule-upcoming-row {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.schedule-upcoming-date {
+  flex: 0 0 110px;
+  color: var(--text-muted);
+}
+.schedule-upcoming-items {
+  flex: 1;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.kg-state-unknown {
-  background: var(--surface-2);
-  color: var(--text-muted);
-  border: 1px dashed var(--border);
-}
-
-.kg-bar-track-empty {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--ring-track),
-    var(--ring-track) 4px,
-    transparent 4px,
-    transparent 8px
-  );
+@media (max-width: 640px) {
+  .schedule-block-label { flex-basis: 84px; }
+  .schedule-upcoming-items { white-space: normal; }
 }
