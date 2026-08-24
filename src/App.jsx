@@ -19,6 +19,8 @@ import ParentView from "./components/ParentView.jsx";
 import Earnings from "./components/Earnings.jsx";
 import { useIncentives } from "./hooks/useIncentives.js";
 import { computeOnTrack } from "./utils/onTrack.js";
+import ScheduleToday from "./components/ScheduleToday.jsx";
+import { shouldShowSchedule } from "./services/schedule.js";
 
 // Parked but kept in the repo — re-enable when ready:
 //   import StrandGarden from "./components/StrandGarden.jsx";
@@ -166,6 +168,16 @@ function SignedInDashboard({ student, signOut }) {
       <section className="section">
         <TodayPlan apps={apps} studentId={student.id} />
       </section>
+
+      {/* Day structure — live from the shared Google Sheet (Jackson only).
+          School block, 9 AM check-in, robotics, cardio, and whatever
+          Skip enters (Kula / ski / rehab) flow in without a deploy. */}
+      {shouldShowSchedule(student) && (
+        <section className="section">
+          <h2 className="section-title">Today's Schedule</h2>
+          <ScheduleToday />
+        </section>
+      )}
 
       {/* Today's Goals + Earnings side by side */}
       <section className="section">
