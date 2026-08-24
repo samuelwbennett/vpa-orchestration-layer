@@ -10,18 +10,25 @@
 //   }>
 // =====================================================
 
+import { config } from "./config.js";
 import * as mathAcademy from "./mathAcademy.js";
 import * as mathFacts from "./mathFacts.js";
+import * as asuPrep from "./asuPrep.js";
 import * as readingFacts from "./readingFacts.js";
 import * as readingAcademy from "./readingAcademy.js";
 
-// Order here = display order in the dashboard.
-const ADAPTERS = [
-  { key: "math-academy", impl: mathAcademy },
-  { key: "math-facts", impl: mathFacts },
-  { key: "reading-facts", impl: readingFacts },
-  { key: "reading-academy", impl: readingAcademy }
+// Order here = display order in the dashboard. Adapters stay imported
+// even when parked — config.<app>.enabled decides what actually runs,
+// so re-enabling an app is a one-line config flip.
+const ALL_ADAPTERS = [
+  { key: "math-academy", impl: mathAcademy, enabled: config.mathAcademy.enabled },
+  { key: "math-facts", impl: mathFacts, enabled: config.mathFacts.enabled },
+  { key: "asu-prep", impl: asuPrep, enabled: config.asuPrep.enabled },
+  { key: "reading-facts", impl: readingFacts, enabled: config.readingFacts.enabled },
+  { key: "reading-academy", impl: readingAcademy, enabled: config.readingAcademy.enabled }
 ];
+
+const ADAPTERS = ALL_ADAPTERS.filter((a) => a.enabled !== false);
 
 export async function fetchAllSnapshots({ signal, studentId } = {}) {
   const results = await Promise.allSettled(
