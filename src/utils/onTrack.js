@@ -62,6 +62,7 @@ export function priority(summary) {
 // Compact per-app label for hover/tooltips.
 export function appStatusLabel(a) {
   if (a.status === "coming_soon") return "coming soon";
+  if (a.status === "link_only") return "linked app";
   if (a.status === "complete") return "goal met";
   if (a.status === "in_progress") return `${a.todayXP} / ${a.dailyGoal} XP`;
   return "not started today";
