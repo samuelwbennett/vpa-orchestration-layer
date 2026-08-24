@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock } from "lucide-react";
+import { Lock, ArrowUpRight } from "lucide-react";
 import { launchApp } from "../utils/launch.js";
 
 /**
@@ -22,6 +22,7 @@ import { launchApp } from "../utils/launch.js";
 const APP_COLOR_VAR = {
   "math-facts":      "var(--ring-math-facts)",
   "math-academy":    "var(--ring-math-academy)",
+  "asu-prep":        "var(--ring-asu-prep)",
   "reading-facts":   "var(--ring-reading-facts)",
   "reading-academy": "var(--ring-reading-academy)",
 };
@@ -29,6 +30,7 @@ const APP_COLOR_VAR = {
 const APP_COLOR_HEX = {
   "math-facts":      "#ff453a",
   "math-academy":    "#0a84ff",
+  "asu-prep":        "#8c1d40", // ASU maroon
   "reading-facts":   "#30d158",
   "reading-academy": "#bf5af2",
 };
@@ -50,11 +52,16 @@ function Ring({ app }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
 
+  // Link-only apps (e.g. ASU Prep before Canvas API access): no XP or
+  // goal to track here — the ring is purely a launcher into the app's
+  // own dashboard. Renders a full-tint ring with an "Open" center.
+  const linkOnly = app.status === "link_only";
+
   // Rest day: dailyGoal === 0 (e.g. Math Academy on a configured rest
   // day if that case ever sneaks through). Render a dash, no progress.
-  const restDay = !locked && app.dailyGoal === 0;
+  const restDay = !locked && !linkOnly && app.dailyGoal === 0;
 
-  const pct = locked || restDay
+  const pct = locked || restDay || linkOnly
     ? 0
     : Math.max(0, Math.min(1, app.todayXP / app.dailyGoal));
   const offset = circumference * (1 - pct);
@@ -62,7 +69,7 @@ function Ring({ app }) {
   const strokeColor = APP_COLOR_VAR[app.id] || "var(--blue)";
   const trackColor = locked
     ? "var(--ring-track)"
-    : hexToRgba(APP_COLOR_HEX[app.id] || "#0a84ff", 0.18);
+    : hexToRgba(APP_COLOR_HEX[app.id] || "#0a84ff", linkOnly ? 0.3 : 0.18);
 
   // Whole tile launches the app on click / Enter / Space when not
   // locked. Keep the existing tabIndex + aria-label so screen readers
@@ -100,7 +107,7 @@ function Ring({ app }) {
               cx={size / 2} cy={size / 2} r={radius}
               fill="none" stroke={trackColor} strokeWidth={stroke}
             />
-            {!locked && !restDay && (
+            {!locked && !restDay && !linkOnly && (
               <circle
                 cx={size / 2} cy={size / 2} r={radius}
                 fill="none" stroke={strokeColor} strokeWidth={stroke}
@@ -115,6 +122,13 @@ function Ring({ app }) {
         <div className="ring-center">
           {locked ? (
             <div className="ring-center-locked">LOCKED</div>
+          ) : linkOnly ? (
+            <>
+              <div className="ring-xp">
+                <ArrowUpRight size={26} strokeWidth={2.25} />
+              </div>
+              <div className="ring-xp-sub">Open</div>
+            </>
           ) : restDay ? (
             <>
               <div className="ring-xp">—</div>
@@ -134,12 +148,26 @@ function Ring({ app }) {
         {app.name}
       </div>
 
-      {!locked && <RingTooltip app={app} pct={pct} restDay={restDay} />}
+      {!locked && (
+        <RingTooltip app={app} pct={pct} restDay={restDay} linkOnly={linkOnly} />
+      )}
     </div>
   );
 }
 
-function RingTooltip({ app, pct, restDay }) {
+function RingTooltip({ app, pct, restDay, linkOnly }) {
+  if (linkOnly) {
+    return (
+      <div className="ring-tooltip" role="tooltip">
+        <div className="ring-tooltip-row main">
+          <span>Opens {app.name}'s own dashboard</span>
+        </div>
+        {app.nextLesson && (
+          <div className="ring-tooltip-next">{app.nextLesson}</div>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="ring-tooltip" role="tooltip">
       <div className="ring-tooltip-row main">
@@ -178,10 +206,12 @@ function statusText(s) {
   if (s === "complete") return "Complete";
   if (s === "in_progress") return "In progress";
   if (s === "ready") return "Ready";
+  if (s === "link_only") return "Linked app";
   return s;
 }
 
 function ariaSummary(app, pct, restDay) {
+  if (app.status === "link_only") return `${app.name}: open app`;
   if (restDay) return `${app.name}: rest day`;
   return `${app.name}: ${app.todayXP} of ${app.dailyGoal} XP, ${Math.round(pct * 100)} percent`;
 }

@@ -166,7 +166,7 @@ function countOtherActionable(perApp) {
 }
 
 export function pickRecommendation(apps) {
-  const order = ["math-academy", "math-facts", "reading-facts"];
+  const order = ["math-academy", "math-facts"];
   for (const id of order) {
     const app = apps.find((a) => a.id === id);
     if (!app) continue;
