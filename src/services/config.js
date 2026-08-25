@@ -64,11 +64,11 @@ export const config = {
     apiBaseUrl:
       env.VITE_ASU_API_BASE_URL || "https://math-facts-trainer.vercel.app",
     snapshotPath: env.VITE_ASU_SNAPSHOT_PATH || "/api/asu-prep/snapshot",
-    // Where the ring sends the student. Override with VITE_ASU_DEEP_LINK
-    // once we confirm Jackson's exact login URL (Canvas lives at
-    // asuprep.instructure.com).
+    // Where the ring sends the student: Jackson's ASU Prep Global
+    // dashboard (Genius SIS), which links through to his Canvas
+    // courses. Confirmed by Samuel 2026-08-24.
     deepLinkBaseUrl:
-      env.VITE_ASU_DEEP_LINK || "https://asuprep.instructure.com",
+      env.VITE_ASU_DEEP_LINK || "https://global.asuprep.org/PublicWelcome.aspx",
     studentId:
       env.VITE_ASU_STUDENT_ID || env.VITE_STUDENT_ID || "1240ae1d-c10f-44ed-96ef-5ee372f371a6"
   },
