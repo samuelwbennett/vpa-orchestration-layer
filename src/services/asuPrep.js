@@ -91,3 +91,32 @@ export async function fetchSnapshot({ signal, studentId } = {}) {
     };
   }
 }
+
+// Per-course completion + pacing for the ASU Courses section.
+// Same combined proxy function, ?view=progress. Shape (per course):
+//   { id, name, htmlUrl,
+//     completionPct,                  // assignments submitted / total
+//     assignmentsTotal, assignmentsSubmitted,
+//     currentScore, currentGrade,
+//     startAt, endAt,
+//     expectedPct, paceDeltaPct, paceDeltaDays }
+//
+// Degraded (proxy down / token revoked) → { courses: [], _degraded }
+// so the section renders a quiet notice, never fabricated progress.
+export async function fetchProgress({ signal, studentId } = {}) {
+  const { apiBaseUrl, snapshotPath } = config.asuPrep;
+  const sid = studentId || config.asuPrep.studentId;
+  const url =
+    `${apiBaseUrl}${snapshotPath}?view=progress` +
+    `&student=${encodeURIComponent(sid)}`;
+  try {
+    const data = await getJSON(url, { signal });
+    return {
+      courses: Array.isArray(data?.courses) ? data.courses : [],
+      asOf: data?.asOf || null
+    };
+  } catch (err) {
+    console.warn("[asuPrep] progress endpoint unavailable:", err);
+    return { courses: [], asOf: null, _degraded: true };
+  }
+}
