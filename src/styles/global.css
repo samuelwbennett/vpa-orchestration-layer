@@ -2699,3 +2699,83 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 640px) {
   .asu-row-head { flex-direction: column; gap: 4px; }
 }
+
+/* =====================================================
+   Session timer (focus clock + today's time rollup)
+   ===================================================== */
+.timer-section { margin-top: 16px; }
+
+.timer-card { padding: 14px 20px; }
+
+.timer-card.active {
+  border: 1px solid rgba(140, 29, 64, 0.25);
+}
+
+.timer-live {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.timer-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  flex: 0 0 auto;
+  animation: timer-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.8); }
+}
+
+.timer-live-text {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+}
+
+.timer-app {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.timer-clock {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.timer-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+.timer-idle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-idle-icon {
+  display: inline-flex;
+  color: var(--text-subtle);
+  flex: 0 0 auto;
+}
+
+.timer-idle-text { font-size: 13px; }
+.timer-idle-text.muted { color: var(--text-muted); }
+.timer-breakdown { color: var(--text-muted); }
