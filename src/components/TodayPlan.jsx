@@ -20,7 +20,7 @@ import { useXpRollup } from "../hooks/useXpRollup.js";
  * Also renders a unified XP rollup line below the headline, summed
  * across every app via /api/xp.
  */
-export default function TodayPlan({ apps, studentId }) {
+export default function TodayPlan({ apps, studentId, onLaunch }) {
   const today = useTodayPriority({ studentId });
   const xp = useXpRollup({ studentId });
 
@@ -31,6 +31,7 @@ export default function TodayPlan({ apps, studentId }) {
         top={today.top}
         otherCount={countOtherActionable(today.perApp)}
         xpTotals={xp.totals}
+        onLaunch={onLaunch}
       />
     );
   }
@@ -39,7 +40,11 @@ export default function TodayPlan({ apps, studentId }) {
   const legacy = pickRecommendation(apps);
   if (legacy) {
     return (
-      <LegacyPriorityCard recommended={legacy} xpTotals={xp.totals} />
+      <LegacyPriorityCard
+        recommended={legacy}
+        xpTotals={xp.totals}
+        onLaunch={onLaunch}
+      />
     );
   }
 
@@ -66,7 +71,7 @@ export default function TodayPlan({ apps, studentId }) {
 
 // --- contract-driven card (uses /api/today + /api/xp) ---
 
-function ContractPriorityCard({ top, otherCount, xpTotals }) {
+function ContractPriorityCard({ top, otherCount, xpTotals, onLaunch }) {
   const rec = top.recommendation;
   const priorityClass =
     rec.priority === "high" ? "" : rec.priority === "low" ? " low" : " medium";
@@ -91,7 +96,10 @@ function ContractPriorityCard({ top, otherCount, xpTotals }) {
         </div>
         <button
           className="btn-primary"
-          onClick={() => launchApp(top.link)}
+          onClick={() => {
+            if (onLaunch) onLaunch({ id: top.id });
+            launchApp(top.link);
+          }}
         >
           Start Now <ArrowRight size={16} />
         </button>
@@ -102,7 +110,7 @@ function ContractPriorityCard({ top, otherCount, xpTotals }) {
 
 // --- legacy snapshot-driven card (kept as fallback) ---
 
-function LegacyPriorityCard({ recommended, xpTotals }) {
+function LegacyPriorityCard({ recommended, xpTotals, onLaunch }) {
   const remaining = recommended.dailyGoal - recommended.todayXP;
   const pctBehind = Math.round(
     100 * (1 - recommended.todayXP / recommended.dailyGoal)
@@ -125,7 +133,10 @@ function LegacyPriorityCard({ recommended, xpTotals }) {
         </div>
         <button
           className="btn-primary"
-          onClick={() => launchApp(recommended.link)}
+          onClick={() => {
+            if (onLaunch) onLaunch({ id: recommended.id });
+            launchApp(recommended.link);
+          }}
         >
           Start Now <ArrowRight size={16} />
         </button>

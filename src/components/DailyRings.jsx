@@ -35,17 +35,17 @@ const APP_COLOR_HEX = {
   "reading-academy": "#bf5af2",
 };
 
-export default function DailyRings({ apps }) {
+export default function DailyRings({ apps, onLaunch }) {
   return (
     <div className="rings-row">
       {apps.map((app) => (
-        <Ring key={app.id} app={app} />
+        <Ring key={app.id} app={app} onLaunch={onLaunch} />
       ))}
     </div>
   );
 }
 
-function Ring({ app }) {
+function Ring({ app, onLaunch }) {
   const locked = app.status === "coming_soon";
   const size = 132;
   const stroke = 12;
@@ -76,6 +76,8 @@ function Ring({ app }) {
   // and keyboard users still get the hover tooltip semantics.
   const handleLaunch = () => {
     if (locked || !app.link) return;
+    // Session timer hook: timed apps start the focus clock on launch.
+    if (onLaunch) onLaunch(app);
     launchApp(app.link);
   };
   const handleKeyDown = (e) => {
