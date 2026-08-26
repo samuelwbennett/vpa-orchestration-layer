@@ -21,6 +21,8 @@ import { useIncentives } from "./hooks/useIncentives.js";
 import { computeOnTrack } from "./utils/onTrack.js";
 import ScheduleToday from "./components/ScheduleToday.jsx";
 import AsuCourses from "./components/AsuCourses.jsx";
+import SessionTimer from "./components/SessionTimer.jsx";
+import { useSessionTimer } from "./hooks/useSessionTimer.js";
 import { shouldShowSchedule } from "./services/schedule.js";
 
 // Parked but kept in the repo — re-enable when ready:
@@ -103,6 +105,10 @@ function SignedInDashboard({ student, signOut }) {
   const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot(student.id);
   const incentives = useIncentives(student.id);
   const knowledgeState = useStudentKnowledge(student.id);
+  // Focus timer: launching ASU Prep / Math Academy from any launch
+  // surface (rings, Start Now) starts the clock; sessions land in
+  // Supabase learning_sessions when ended.
+  const timer = useSessionTimer(student.id);
 
   if (!apps) {
     return (
@@ -167,7 +173,12 @@ function SignedInDashboard({ student, signOut }) {
 
       {/* Decision engine: what to do RIGHT NOW */}
       <section className="section">
-        <TodayPlan apps={apps} studentId={student.id} />
+        <TodayPlan apps={apps} studentId={student.id} onLaunch={timer.onLaunch} />
+      </section>
+
+      {/* Focus timer strip: live session clock, or today's time rollup */}
+      <section className="section timer-section">
+        <SessionTimer timer={timer} />
       </section>
 
       {/* Day structure — live from the shared Google Sheet (Jackson only).
@@ -196,7 +207,7 @@ function SignedInDashboard({ student, signOut }) {
           <div>
             <h2 className="section-title">Today's Goals</h2>
             <div className="card">
-              <DailyRings apps={apps} />
+              <DailyRings apps={apps} onLaunch={timer.onLaunch} />
             </div>
           </div>
           <div>
