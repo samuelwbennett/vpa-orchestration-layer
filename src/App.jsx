@@ -20,6 +20,7 @@ import Earnings from "./components/Earnings.jsx";
 import { useIncentives } from "./hooks/useIncentives.js";
 import { computeOnTrack } from "./utils/onTrack.js";
 import ScheduleToday from "./components/ScheduleToday.jsx";
+import AsuCourses from "./components/AsuCourses.jsx";
 import { shouldShowSchedule } from "./services/schedule.js";
 
 // Parked but kept in the repo — re-enable when ready:
@@ -176,6 +177,16 @@ function SignedInDashboard({ student, signOut }) {
         <section className="section">
           <h2 className="section-title">Today's Schedule</h2>
           <ScheduleToday />
+        </section>
+      )}
+
+      {/* ASU Prep per-course progress (Canvas). Gated to Jackson like
+          the schedule: the Canvas token identifies one student, so
+          this data must not render on anyone else's dashboard. */}
+      {shouldShowSchedule(student) && (
+        <section className="section">
+          <h2 className="section-title">ASU Prep Courses</h2>
+          <AsuCourses />
         </section>
       )}
 
