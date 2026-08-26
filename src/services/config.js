@@ -63,7 +63,10 @@ export const config = {
     // Future proxy home (same Vercel project that proxies Math Academy).
     apiBaseUrl:
       env.VITE_ASU_API_BASE_URL || "https://math-facts-trainer.vercel.app",
-    snapshotPath: env.VITE_ASU_SNAPSHOT_PATH || "/api/asu-prep/snapshot",
+    // One combined serverless fn (Vercel Hobby 12-function cap):
+    // snapshot is the default view; per-course progress + pace is
+    // the same route with ?view=progress.
+    snapshotPath: env.VITE_ASU_SNAPSHOT_PATH || "/api/asu-prep",
     // Where the ring sends the student: Jackson's ASU Prep Global
     // dashboard (Genius SIS), which links through to his Canvas
     // courses. Confirmed by Samuel 2026-08-24.
