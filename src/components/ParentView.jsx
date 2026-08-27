@@ -1,25 +1,37 @@
-import React, { useState } from "react";
-import { RefreshCw, LogOut, ChevronDown, ChevronRight } from "lucide-react";
+import React from "react";
+import { RefreshCw, LogOut, GraduationCap, Video, Bot, HeartPulse } from "lucide-react";
 import { useParentChildren } from "../hooks/useParentChildren.js";
 import { useTodayPriority } from "../hooks/useTodayPriority.js";
 import { useXpRollup } from "../hooks/useXpRollup.js";
+import { useAsuProgress } from "../hooks/useAsuProgress.js";
+import { useStudentKnowledge } from "../hooks/useStudentKnowledge.js";
+import { useLoadModel } from "../hooks/useLoadModel.js";
+import { useSchedule } from "../hooks/useSchedule.js";
 import { summarize } from "../utils/onTrack.js";
+import { shouldShowSchedule, findToday, CHECKIN_MEET_URL } from "../services/schedule.js";
+import { buildTalkPrompts } from "../services/talkPrompts.js";
+import { formatDuration } from "../services/sessions.js";
+import ParentLoad from "./ParentLoad.jsx";
+import ParentCourses, { TalkPrompts } from "./ParentCourses.jsx";
+import PaceProjector from "./PaceProjector.jsx";
+import CollapsibleSection from "./CollapsibleSection.jsx";
 
 /**
- * ParentView — the family-facing experience for the VPA Learning OS.
+ * ParentView — the family dashboard for Dan and Skip.
  *
- * One card per child, scoped to whoever's linked via guardian_students:
- * name, today's pace (in warm/encouraging language), today's wins, the
- * cross-app priority for what the kid should do RIGHT NOW (driven by
- * the contract /api/today), today's XP across all apps, and an
- * expandable per-app drill-down. Read-only by design — parents watch,
- * they don't drive.
+ * Read-only by design: parents watch, they don't drive. Nothing here
+ * writes to Jackson's data — his effort ratings and his timer stay
+ * his to enter.
+ *
+ * For the student whose external accounts are wired up (Jackson), this
+ * renders the full picture: today's plan and schedule, load & recovery,
+ * per-course grades and current work, data-grounded conversation
+ * starters, and the pace projector. Any other child falls back to the
+ * simple summary card, since the Canvas/schedule feeds are single-
+ * student.
  */
 export default function ParentView({ profile, signOut }) {
-  const { children, loading, error, lastUpdated, refresh } =
-    useParentChildren();
-  const [expandedId, setExpandedId] = useState(null);
-
+  const { children, loading, error, lastUpdated, refresh } = useParentChildren();
   const parentName = (profile && profile.display_name) || "there";
 
   return (
@@ -27,26 +39,14 @@ export default function ParentView({ profile, signOut }) {
       <header className="header">
         <div className="header-left">
           <div className="eyebrow">{todayLabel()} · Family Dashboard</div>
-          <h1>
-            Good {greeting()}, {parentName}.
-          </h1>
+          <h1>Good {greeting()}, {trimName(parentName)}.</h1>
         </div>
         <div className="header-right">
-          <button
-            className="refresh-btn"
-            onClick={refresh}
-            disabled={loading}
-            title="Refresh"
-          >
+          <button className="refresh-btn" onClick={refresh} disabled={loading} title="Refresh">
             <RefreshCw size={13} className={loading ? "spinning" : ""} />
             {lastUpdated ? `Updated ${formatAgo(lastUpdated)}` : "Refresh"}
           </button>
-          <button
-            className="refresh-btn"
-            onClick={signOut}
-            title="Sign out"
-            aria-label="Sign out"
-          >
+          <button className="refresh-btn" onClick={signOut} title="Sign out" aria-label="Sign out">
             <LogOut size={13} />
           </button>
         </div>
@@ -74,143 +74,176 @@ export default function ParentView({ profile, signOut }) {
           <div className="card teacher-empty">
             <h3>No children linked yet</h3>
             <p>
-              Once your child's account is linked to yours, their progress
-              will appear here. Reach out to your school admin to get
-              connected.
+              Once your child's account is linked to yours, their progress will
+              appear here. Reach out to your school admin to get connected.
             </p>
           </div>
         </div>
       )}
 
       {children.map((child) => (
-        <ChildCard
-          key={child.id}
-          child={child}
-          open={expandedId === child.id}
-          onToggle={() =>
-            setExpandedId(expandedId === child.id ? null : child.id)
-          }
-        />
+        <ChildSections key={child.id} child={child} />
       ))}
     </div>
   );
 }
 
-/**
- * One child's card. Lives in its own component so we can call the
- * per-child `useTodayPriority` + `useXpRollup` hooks here without
- * violating the rules of hooks.
- */
-function ChildCard({ child, open, onToggle }) {
+function ChildSections({ child }) {
+  // Hooks must run unconditionally; `full` only gates rendering.
+  const full = shouldShowSchedule({ id: child.id, display_name: child.name });
+
   const today = useTodayPriority({ studentId: child.id });
   const xp = useXpRollup({ studentId: child.id });
+  const asu = useAsuProgress(full);
+  const knowledgeState = useStudentKnowledge(full ? child.id : null);
+  const load = useLoadModel(child.id, full);
+  const { days: scheduleDays } = useSchedule(full);
 
   const summary = summarize(child.apps);
-  const active = (child.apps || []).filter(
+  const activeApps = (child.apps || []).filter(
     (a) => a.status !== "coming_soon" && a.dailyGoal > 0
   );
-  const wins = active.filter((a) => a.todayXP >= a.dailyGoal);
-
   const topRec =
-    today.top && today.top.recommendation?.kind !== "none"
-      ? today.top
-      : null;
+    today.top && today.top.recommendation?.kind !== "none" ? today.top : null;
+  const todayRow = full && scheduleDays ? findToday(scheduleDays) : null;
+  const todayMin = load?.series?.length
+    ? load.series[load.series.length - 1].learnMin
+    : 0;
+
+  const prompts = full
+    ? buildTalkPrompts({
+        courses: asu.courses || [],
+        knowledge: knowledgeState.knowledge || [],
+      })
+    : [];
 
   return (
-    <section className="section">
-      <div className="card parent-child">
-        <div className="parent-child-head">
-          <h2 className="parent-child-name">{child.name}</h2>
-          <span className={`on-track ${summary.onTrack.status}`}>
-            <span className="dot" />
-            {parentTone(summary.onTrack.status)}
-          </span>
-        </div>
-
-        <div className="parent-child-pace">
-          {parentPace(summary, active.length)}
-        </div>
-
-        {/* Cross-app priority — what the kid should be doing right now. */}
-        {topRec && (
-          <div className="parent-priority">
-            <div className="parent-priority-label">Today's priority</div>
-            <div className="parent-priority-line">
-              <strong>{topRec.name}</strong> — {topRec.recommendation.headline}
-            </div>
-            <div className="parent-priority-sub">
-              {topRec.recommendation.subtitle}
-            </div>
+    <>
+      {/* ---- Today at a glance ---- */}
+      <section className="section">
+        <div className="card parent-child">
+          <div className="parent-child-head">
+            <h2 className="parent-child-name">{child.name}</h2>
+            <span className={`on-track ${summary.onTrack.status}`}>
+              <span className="dot" />
+              {parentTone(summary.onTrack.status)}
+            </span>
           </div>
-        )}
 
-        {/* Cross-app XP totals — only render when there's something to show. */}
-        {xp.totals && (xp.totals.today > 0 || xp.totals.thisWeek > 0) && (
+          <div className="parent-child-pace">
+            {parentPace(summary, activeApps.length)}
+          </div>
+
+          {topRec && (
+            <div className="parent-priority">
+              <div className="parent-priority-label">What he should do next</div>
+              <div className="parent-priority-line">
+                <strong>{topRec.name}</strong> — {topRec.recommendation.headline}
+              </div>
+              <div className="parent-priority-sub">
+                {topRec.recommendation.subtitle}
+              </div>
+            </div>
+          )}
+
           <div className="parent-xp-rollup">
-            <strong>{Math.round(xp.totals.today)} XP</strong> earned today ·{" "}
-            <strong>{Math.round(xp.totals.thisWeek)} XP</strong> this week
-            <span className="parent-xp-source"> · across all apps</span>
-          </div>
-        )}
-
-        {wins.length > 0 && (
-          <div className="parent-wins">
-            <div className="parent-wins-label">Today's wins</div>
-            <ul className="parent-wins-list">
-              {wins.map((a) => (
-                <li key={a.id}>{a.name} — goal met</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <button className="parent-toggle" onClick={onToggle}>
-          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          {open ? "Hide per-app details" : "See per-app details"}
-        </button>
-
-        {open && (
-          <div className="parent-drill">
-            {(child.apps || []).length === 0 && (
-              <div className="drill-empty">
-                No app data available for {child.name} yet.
-              </div>
+            <strong>{Math.round(xp.totals?.today || 0)} XP</strong> today ·{" "}
+            <strong>{Math.round(xp.totals?.thisWeek || 0)} XP</strong> this week
+            {full && (
+              <>
+                {" · "}
+                <strong>{formatDuration(todayMin * 60)}</strong> focused work today
+              </>
             )}
-            {(child.apps || []).map((a) => (
-              <div key={a.id} className="drill-app">
-                <div className="drill-app-top">
-                  <span className="drill-app-name">{a.name}</span>
-                  <span className={`status-pill ${a.status}`}>
-                    {a.status.replace("_", " ")}
-                  </span>
-                </div>
-                <div className="drill-app-xp">
-                  <span>
-                    <strong>{a.todayXP}</strong>
-                    {a.dailyGoal ? ` / ${a.dailyGoal}` : ""} XP today
-                  </span>
-                  <span className="muted">
-                    {a.weeklyXP} XP this week
-                  </span>
-                </div>
-                {a.nextLesson && (
-                  <div className="drill-app-next">
-                    Next: {a.nextLesson}
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
-        )}
+
+          {todayRow && <TodayBlocks row={todayRow} />}
+        </div>
+      </section>
+
+      {!full && null}
+
+      {full && (
+        <>
+          <section className="section">
+            <h2 className="section-title">Load &amp; Recovery</h2>
+            <ParentLoad load={load} />
+          </section>
+
+          <section className="section">
+            <h2 className="section-title">Talk with {firstName(child.name)} about</h2>
+            <TalkPrompts prompts={prompts} />
+          </section>
+
+          <section className="section">
+            <h2 className="section-title">Courses</h2>
+            <ParentCourses
+              courses={asu.courses}
+              knowledge={knowledgeState.knowledge}
+              loading={asu.courses === null}
+              degraded={asu.degraded}
+            />
+          </section>
+
+          <CollapsibleSection
+            id="parent-pace"
+            title="Pace projector"
+            defaultOpen={false}
+            summary="When will he finish? — drag the rates"
+          >
+            <PaceProjector
+              courses={asu.courses || []}
+              knowledge={knowledgeState.knowledge || []}
+            />
+          </CollapsibleSection>
+        </>
+      )}
+    </>
+  );
+}
+
+// Today's schedule blocks, compressed to a single readable line-up.
+function TodayBlocks({ row }) {
+  const items = [];
+  if (row.school) items.push({ icon: <GraduationCap size={14} />, text: row.school });
+  if (row.checkin)
+    items.push({
+      icon: <Video size={14} />,
+      text: row.checkin,
+      href: CHECKIN_MEET_URL,
+    });
+  if (row.robotics && !/^no robotics/i.test(row.robotics))
+    items.push({ icon: <Bot size={14} />, text: row.robotics });
+  if (row.cardio) items.push({ icon: <HeartPulse size={14} />, text: row.cardio });
+  if (row.kula) items.push({ icon: <HeartPulse size={14} />, text: row.kula });
+  if (row.ski) items.push({ icon: <HeartPulse size={14} />, text: row.ski });
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="parent-today-blocks">
+      <div className="parent-wins-label">His day</div>
+      <div className="parent-blocks-row">
+        {items.map((i, idx) => (
+          <span key={idx} className="parent-block">
+            {i.icon}
+            {i.href ? (
+              <a href={i.href} target="_blank" rel="noreferrer">
+                {i.text}
+              </a>
+            ) : (
+              i.text
+            )}
+          </span>
+        ))}
       </div>
-    </section>
+      {row.notes && <div className="parent-block-note">{row.notes}</div>}
+    </div>
   );
 }
 
 // ---- helpers ----
 
-// Warmer labels than the teacher/admin "Needs Attention" framing —
-// kids are kids, parents don't need an alarm bell.
 function parentTone(status) {
   if (status === "green") return "On Track";
   if (status === "yellow") return "Building up";
@@ -220,9 +253,15 @@ function parentTone(status) {
 function parentPace(summary, activeCount) {
   if (activeCount === 0) return "Nothing scheduled today.";
   if (summary.noXp) return "Hasn't started today yet.";
-  return `${summary.met} of ${activeCount} ${
-    activeCount === 1 ? "goal" : "goals"
-  } met today.`;
+  return `${summary.met} of ${activeCount} ${activeCount === 1 ? "goal" : "goals"} met today.`;
+}
+
+function firstName(name) {
+  return String(name || "").trim().split(/\s+/)[0] || "them";
+}
+
+function trimName(name) {
+  return String(name || "").replace(/\.\s*$/, "");
 }
 
 function todayLabel() {
@@ -241,14 +280,10 @@ function greeting() {
 }
 
 function formatAgo(date) {
-  const seconds = Math.max(
-    0,
-    Math.round((Date.now() - date.getTime()) / 1000)
-  );
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
   if (seconds < 10) return "just now";
   if (seconds < 60) return `${seconds}s ago`;
   const mins = Math.round(seconds / 60);
   if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  return `${hrs}h ago`;
+  return `${Math.round(mins / 60)}h ago`;
 }

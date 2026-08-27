@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Brain, HeartPulse } from "lucide-react";
 import { formatDuration } from "../services/sessions.js";
+import { displayRatio } from "../services/loadModel.js";
 
 /**
  * LoadDials — the load & recovery card:
@@ -42,15 +43,13 @@ export default function LoadDials({ load }) {
             icon={<Brain size={15} />}
             label="Learning"
             minutes={today.learnMin}
-            load={today.learnLoad}
-            chronic={readiness.learnChronic}
+            ratio={displayRatio(today.learnLoad, readiness.learnChronic, readiness.learnEstablished)}
           />
           <Meter
             icon={<HeartPulse size={15} />}
             label="Physical"
             minutes={today.physMin}
-            load={today.physLoad}
-            chronic={readiness.physChronic}
+            ratio={displayRatio(today.physLoad, readiness.physChronic, readiness.physEstablished)}
           />
         </div>
       )}
@@ -78,12 +77,10 @@ export default function LoadDials({ load }) {
   );
 }
 
-function Meter({ icon, label, minutes, load, chronic }) {
-  // vs-normal ratio only when a chronic baseline exists.
-  const ratio =
-    chronic > 0 ? Math.round((load / chronic) * 10) / 10 : null;
+function Meter({ icon, label, minutes, ratio }) {
+  // vs-normal only once that series has earned a real baseline.
   const pct =
-    ratio === null ? 0 : Math.max(4, Math.min(100, (ratio / 2) * 100));
+    ratio === null ? 0 : Math.max(4, Math.min(100, (ratio.value / 2) * 100));
 
   return (
     <div className="load-meter">
@@ -96,7 +93,10 @@ function Meter({ icon, label, minutes, load, chronic }) {
       <span className="load-meter-value">
         {formatDuration(minutes * 60)}
         {ratio !== null && (
-          <span className="load-meter-ratio"> · {ratio}× normal</span>
+          <span className="load-meter-ratio">
+            {" · "}
+            {ratio.capped ? "3×+" : `${ratio.value}×`} normal
+          </span>
         )}
       </span>
     </div>
