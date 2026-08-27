@@ -2779,3 +2779,181 @@ a { color: inherit; text-decoration: none; }
 .timer-idle-text { font-size: 13px; }
 .timer-idle-text.muted { color: var(--text-muted); }
 .timer-breakdown { color: var(--text-muted); }
+
+/* =====================================================
+   Load & Recovery (dials, check-in, planner hints)
+   ===================================================== */
+.load-card { padding: 20px 24px; }
+
+.load-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.load-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.load-chip-green  { background: var(--green-soft);  color: #1f7a37; }
+.load-chip-yellow { background: var(--yellow-soft); color: #a86a00; }
+.load-chip-red    { background: var(--red-soft);    color: #a31b14; }
+.load-chip-muted  { background: var(--surface-2);   color: var(--text-muted); border: 1px solid var(--border); }
+
+.load-why {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1 1 240px;
+}
+
+.load-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.load-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.load-meter-icon { display: inline-flex; color: var(--text-subtle); }
+.load-meter-label { flex: 0 0 68px; color: var(--text-muted); font-weight: 500; }
+
+.load-meter-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ring-track);
+}
+.load-meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--blue);
+  min-width: 2px;
+}
+.load-meter:last-child .load-meter-fill { background: var(--green); }
+.load-meter-norm {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--text-subtle);
+  transform: translateX(-1px);
+}
+.load-meter-value {
+  flex: 0 0 150px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.load-meter-ratio { color: var(--text-muted); font-size: 12px; }
+
+.checkin {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-bottom: 12px;
+}
+.checkin-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.checkin-status {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-subtle);
+  margin-left: 6px;
+}
+.checkin-status.done { color: #1f7a37; }
+
+.checkin-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+.checkin-label {
+  flex: 0 0 100px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.checkin-scale { display: inline-flex; gap: 4px; }
+.checkin-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: background 0.1s ease, color 0.1s ease, transform 0.1s ease;
+}
+.checkin-dot:hover { background: var(--surface-2); }
+.checkin-dot.picked {
+  background: var(--text);
+  color: var(--surface);
+  border-color: var(--text);
+  transform: scale(1.05);
+}
+
+.load-block-hint,
+.load-plan-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding-top: 4px;
+}
+.load-plan-hint { color: #a86a00; }
+
+/* Break prompt inside the active timer */
+.timer-break {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #a86a00;
+  background: var(--yellow-soft);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.timer-break-done {
+  margin-left: auto;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+/* Collapsible section headers */
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+  color: var(--text-subtle);
+  width: 100%;
+  text-align: left;
+}
+.section-toggle .section-title.collapsible { margin: 0; }
+.section-toggle:hover .section-title.collapsible { color: var(--text-muted); }
+.section-toggle-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
