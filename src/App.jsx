@@ -16,9 +16,13 @@ import RolePlaceholder from "./components/RolePlaceholder.jsx";
 import TeacherView from "./components/TeacherView.jsx";
 import AdminView from "./components/AdminView.jsx";
 import ParentView from "./components/ParentView.jsx";
-import Earnings from "./components/Earnings.jsx";
-import { useIncentives } from "./hooks/useIncentives.js";
+// Earnings + useIncentives parked 2026-08-27 (removed from the student
+// dashboard at Samuel's request) — files kept in the repo, and the
+// admin/parent redemption views are unaffected.
 import { computeOnTrack } from "./utils/onTrack.js";
+import CollapsibleSection from "./components/CollapsibleSection.jsx";
+import LoadDials from "./components/LoadDials.jsx";
+import { useLoadModel } from "./hooks/useLoadModel.js";
 import ScheduleToday from "./components/ScheduleToday.jsx";
 import AsuCourses from "./components/AsuCourses.jsx";
 import SessionTimer from "./components/SessionTimer.jsx";
@@ -103,12 +107,16 @@ export default function App() {
 function SignedInDashboard({ student, signOut }) {
   const { weeklyHistory } = studentDemoData;
   const { apps, loading, error, lastUpdated, refresh } = useStudentSnapshot(student.id);
-  const incentives = useIncentives(student.id);
   const knowledgeState = useStudentKnowledge(student.id);
   // Focus timer: launching ASU Prep / Math Academy from any launch
   // surface (rings, Start Now) starts the clock; sessions land in
   // Supabase learning_sessions when ended.
   const timer = useSessionTimer(student.id);
+  // Load model (check-ins, readiness, planner). Physical minutes come
+  // from Jackson's schedule sheet, so the section is gated like the
+  // schedule panel; the hook stays dormant for other students.
+  const showJackson = shouldShowSchedule(student);
+  const load = useLoadModel(student.id, showJackson);
 
   if (!apps) {
     return (
@@ -176,15 +184,26 @@ function SignedInDashboard({ student, signOut }) {
         <TodayPlan apps={apps} studentId={student.id} onLaunch={timer.onLaunch} />
       </section>
 
-      {/* Focus timer strip: live session clock, or today's time rollup */}
+      {/* Focus timer strip: live session clock, or today's time rollup.
+          Block length adapts to readiness (heavy weeks → shorter blocks). */}
       <section className="section timer-section">
-        <SessionTimer timer={timer} />
+        <SessionTimer timer={timer} blockMin={load.copy?.blockMin} />
       </section>
+
+      {/* Load & Recovery — effort meters, readiness, two-tap check-in,
+          and schedule-aware banking hints (Jackson only: physical
+          minutes come from his schedule sheet). */}
+      {showJackson && (
+        <section className="section">
+          <h2 className="section-title">Load &amp; Recovery</h2>
+          <LoadDials load={load} />
+        </section>
+      )}
 
       {/* Day structure — live from the shared Google Sheet (Jackson only).
           School block, 9 AM check-in, robotics, cardio, and whatever
           Skip enters (Kula / ski / rehab) flow in without a deploy. */}
-      {shouldShowSchedule(student) && (
+      {showJackson && (
         <section className="section">
           <h2 className="section-title">Today's Schedule</h2>
           <ScheduleToday />
@@ -194,32 +213,18 @@ function SignedInDashboard({ student, signOut }) {
       {/* ASU Prep per-course progress (Canvas). Gated to Jackson like
           the schedule: the Canvas token identifies one student, so
           this data must not render on anyone else's dashboard. */}
-      {shouldShowSchedule(student) && (
+      {showJackson && (
         <section className="section">
           <h2 className="section-title">ASU Prep Courses</h2>
           <AsuCourses />
         </section>
       )}
 
-      {/* Today's Goals + Earnings side by side */}
+      {/* Today's Goals (Earnings card removed 2026-08-27) */}
       <section className="section">
-        <div className="grid-rings-earnings">
-          <div>
-            <h2 className="section-title">Today's Goals</h2>
-            <div className="card">
-              <DailyRings apps={apps} onLaunch={timer.onLaunch} />
-            </div>
-          </div>
-          <div>
-            <h2 className="section-title">Earnings</h2>
-            <Earnings
-              data={incentives.data}
-              loading={incentives.loading}
-              error={incentives.error}
-              redeem={incentives.redeem}
-              studentId={student.id}
-            />
-          </div>
+        <h2 className="section-title">Today's Goals</h2>
+        <div className="card">
+          <DailyRings apps={apps} onLaunch={timer.onLaunch} />
         </div>
       </section>
 
@@ -228,16 +233,38 @@ function SignedInDashboard({ student, signOut }) {
         <Insights apps={apps} weeklyHistory={weeklyHistory} />
       </section>
 
-      {/* Knowledge Graph — per-topic mastery from Math Academy Beta 9 */}
-      <section className="section">
-        <h2 className="section-title">Knowledge Graph</h2>
+      {/* Knowledge Graph — per-topic mastery from Math Academy Beta 9.
+          Collapsible (collapsed by default) — it's long, and most days
+          the summary is enough. State persists per browser. */}
+      <CollapsibleSection
+        id="knowledge-graph"
+        title="Knowledge Graph"
+        summary={knowledgeSummaryText(knowledgeState.knowledge)}
+      >
         <KnowledgeGraph
           knowledge={knowledgeState.knowledge}
           loading={knowledgeState.loading}
         />
-      </section>
+      </CollapsibleSection>
     </div>
   );
+}
+
+// One-line summary for the collapsed Knowledge Graph header, e.g.
+// "Mathematical Foundations II — 62 mastered · 11 learning".
+function knowledgeSummaryText(knowledge) {
+  const app = Array.isArray(knowledge)
+    ? knowledge.find((k) => k && k.summary)
+    : null;
+  if (!app) return null;
+  const parts = [];
+  if (app.course?.name) parts.push(app.course.name);
+  const s = app.summary;
+  const counts = [];
+  if (Number.isFinite(s.mastered)) counts.push(`${s.mastered} mastered`);
+  if (Number.isFinite(s.learning)) counts.push(`${s.learning} learning`);
+  if (counts.length) parts.push(counts.join(" · "));
+  return parts.join(" — ") || null;
 }
 
 function FullScreenMessage({ children }) {
