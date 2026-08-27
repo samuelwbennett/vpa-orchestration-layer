@@ -55,7 +55,7 @@ export default function SessionTimer({ timer, blockMin = WORK_BLOCK_MIN }) {
           <div className="timer-break">
             <Coffee size={14} />
             <span>
-              {Math.round(nextBreakAt / 60)} min in — take a {BREAK_MIN}-minute
+              {Math.round(nextBreakAt / 60)} min in — take an {BREAK_MIN}-minute
               movement break, then keep going.
             </span>
             <button

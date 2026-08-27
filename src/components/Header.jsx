@@ -26,7 +26,7 @@ export default function Header({
     <header className="header">
       <div className="header-left">
         <div className="eyebrow">{today} · Today's Learning Plan</div>
-        <h1>Good {greeting()}, {studentName}.</h1>
+        <h1>Good {greeting()}, {trimName(studentName)}.</h1>
       </div>
 
       <div className="header-right">
@@ -61,6 +61,12 @@ export default function Header({
       </div>
     </header>
   );
+}
+
+// A display_name that already ends in a period ("Jackson L.") would
+// otherwise render "Jackson L.." after the greeting's own full stop.
+function trimName(name) {
+  return String(name || "").replace(/\.\s*$/, "");
 }
 
 function greeting() {
