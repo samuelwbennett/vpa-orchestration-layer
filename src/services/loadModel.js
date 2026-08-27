@@ -29,6 +29,18 @@
 export const RPE_FALLBACK = 5;
 export const MIN_BASELINE_DAYS = 7;
 
+// A 28-day baseline built from one or two active days is not a
+// baseline — dividing by it produces nonsense like "14× normal".
+// A series only earns a ratio once it has enough non-zero days AND
+// enough accumulated load to be stable.
+export const MIN_ACTIVE_DAYS_PER_SERIES = 5;
+export const MIN_CHRONIC_LOAD = 60; // ≈ 12 min/day at RPE 5
+
+// Ratios above this are displayed as "3×+" rather than a precise
+// number: past this point the exact multiple is noise, and a big
+// number reads as an alarm we can't justify.
+export const MAX_DISPLAY_RATIO = 3;
+
 export const THRESHOLDS = {
   bank: 0.8,
   onTrack: 1.2,
@@ -125,13 +137,34 @@ export function computeReadiness(series) {
   const learnChronic = ewma(learn, 28);
   const physChronic = ewma(phys, 28);
 
+  const learnDays = series.filter((d) => d.learnLoad > 0).length;
+  const physDays = series.filter((d) => d.physLoad > 0).length;
+  const learnEstablished =
+    learnDays >= MIN_ACTIVE_DAYS_PER_SERIES && learnChronic >= MIN_CHRONIC_LOAD;
+  const physEstablished =
+    physDays >= MIN_ACTIVE_DAYS_PER_SERIES && physChronic >= MIN_CHRONIC_LOAD;
+
+  // Neither series has a trustworthy baseline yet — stay in the
+  // honest "still measuring" state rather than inventing a ratio.
+  if (!learnEstablished && !physEstablished) {
+    return {
+      status: "baseline",
+      ratio: null,
+      daysOfData: activeDays.length,
+      learnChronic: Math.round(learnChronic),
+      physChronic: Math.round(physChronic),
+      learnEstablished,
+      physEstablished,
+    };
+  }
+
   // Normalize each day by its own chronic load, combine 50/50. A
   // series with no chronic signal contributes 0, not NaN.
   const combined = series.map((d) => {
-    const l = learnChronic > 0 ? d.learnLoad / learnChronic : 0;
-    const p = physChronic > 0 ? d.physLoad / physChronic : 0;
-    if (learnChronic > 0 && physChronic > 0) return 0.5 * l + 0.5 * p;
-    return l + p; // only one signal present — use it alone
+    const l = learnEstablished ? d.learnLoad / learnChronic : 0;
+    const p = physEstablished ? d.physLoad / physChronic : 0;
+    if (learnEstablished && physEstablished) return 0.5 * l + 0.5 * p;
+    return l + p; // only one established signal — use it alone
   });
   const ratio = ewma(combined, 7);
 
@@ -145,8 +178,20 @@ export function computeReadiness(series) {
     ratio: Math.round(ratio * 100) / 100,
     learnChronic: Math.round(learnChronic),
     physChronic: Math.round(physChronic),
+    learnEstablished,
+    physEstablished,
     daysOfData: activeDays.length,
   };
+}
+
+// Per-series "N× normal" for the meters. Returns null when that
+// series hasn't earned a baseline, and caps the display so an early
+// spike can't read as a five-alarm number.
+export function displayRatio(load, chronic, established) {
+  if (!established || !(chronic > 0)) return null;
+  const r = load / chronic;
+  if (r > MAX_DISPLAY_RATIO) return { value: MAX_DISPLAY_RATIO, capped: true };
+  return { value: Math.round(r * 10) / 10, capped: false };
 }
 
 // Human copy for the readiness chip — descriptive, never diagnostic.
