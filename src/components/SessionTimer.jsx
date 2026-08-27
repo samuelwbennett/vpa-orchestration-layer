@@ -1,10 +1,11 @@
-import React from "react";
-import { Timer, Square } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Timer, Square, Coffee } from "lucide-react";
 import {
   TIMED_APPS,
   formatClock,
   formatDuration,
 } from "../services/sessions.js";
+import { BREAK_MIN, WORK_BLOCK_MIN } from "../services/loadModel.js";
 
 /**
  * SessionTimer — the focus-timer strip.
@@ -20,10 +21,20 @@ import {
  * Honesty note (also in the hook): this measures time near the
  * work. The completion/XP numbers next to it are what keep it real.
  */
-export default function SessionTimer({ timer }) {
+export default function SessionTimer({ timer, blockMin = WORK_BLOCK_MIN }) {
   const { active, elapsed, today, stop } = timer;
 
+  // Structured-break cadence: after each `blockMin` of continuous
+  // work, surface a movement-break prompt. The block length comes
+  // from the load model (readiness shortens it on heavy weeks).
+  const [nextBreakAt, setNextBreakAt] = useState(blockMin * 60);
+  useEffect(() => {
+    // New session (or block-length change) resets the cadence.
+    setNextBreakAt(blockMin * 60);
+  }, [active?.startedAt, blockMin]);
+
   if (active) {
+    const breakDue = elapsed >= nextBreakAt;
     return (
       <div className="card timer-card active">
         <div className="timer-live">
@@ -40,9 +51,27 @@ export default function SessionTimer({ timer }) {
             <Square size={13} /> End session
           </button>
         </div>
-        <div className="timer-hint">
-          Clock keeps running through refreshes — end it when you're done.
-        </div>
+        {breakDue ? (
+          <div className="timer-break">
+            <Coffee size={14} />
+            <span>
+              {Math.round(nextBreakAt / 60)} min in — take a {BREAK_MIN}-minute
+              movement break, then keep going.
+            </span>
+            <button
+              type="button"
+              className="btn-secondary timer-break-done"
+              onClick={() => setNextBreakAt(elapsed + blockMin * 60)}
+            >
+              Took it
+            </button>
+          </div>
+        ) : (
+          <div className="timer-hint">
+            Clock keeps running through refreshes — next break at{" "}
+            {formatClock(nextBreakAt)}.
+          </div>
+        )}
       </div>
     );
   }
