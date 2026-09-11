@@ -101,6 +101,14 @@ export async function fetchSnapshot({ signal, studentId } = {}) {
 //     startAt, endAt,
 //     expectedPct, paceDeltaPct, paceDeltaDays }
 //
+// NOTE (2026-09-11): paceDeltaPct / paceDeltaDays are still returned
+// by the proxy but are no longer what the UI shows. Both measured the
+// gap against an IDEAL even-pace line, which only converts to real
+// catch-up time if the student works at exactly the required rate.
+// The chips now call assignmentPace() in services/pace.js, which
+// states the gap in assignments and derives days from the student's
+// own observed rate. expectedPct is still used, for the bar's tick.
+//
 // Degraded (proxy down / token revoked) → { courses: [], _degraded }
 // so the section renders a quiet notice, never fabricated progress.
 export async function fetchProgress({ signal, studentId } = {}) {

@@ -11,7 +11,13 @@
 // so the section stays a short list Dan and Skip can act on.
 // =====================================================
 
-const BEHIND_DAYS = 4;
+import { assignmentPace } from "./pace.js";
+
+// Raise a course once it is this many assignments short of where the
+// calendar says it should be. Assignments, not days: "2 behind" is a
+// thing a parent can check and Jackson can clear, and it no longer
+// depends on the ideal-pace fiction the old days figure assumed.
+const BEHIND_ASSIGNMENTS = 2;
 
 // Strip ASU's course-code wrapper: "2627-English 12A-LC-1" → "English 12A".
 export function courseLabel(name) {
@@ -40,15 +46,23 @@ export function asuCoursePrompts(courses) {
     const next = (c.nextAssignments || [])[0] || null;
 
     // 1. Behind pace is the thing worth raising first.
-    if (Number.isFinite(c.paceDeltaDays) && c.paceDeltaDays <= -BEHIND_DAYS) {
+    const pace = assignmentPace({
+      assignmentsTotal: c.assignmentsTotal,
+      assignmentsSubmitted: c.assignmentsSubmitted,
+      expectedPct: c.expectedPct,
+      startAt: c.startAt,
+    });
+    if (Number.isFinite(pace.behind) && pace.behind >= BEHIND_ASSIGNMENTS) {
+      const gap =
+        pace.behind === 1 ? "1 assignment behind" : `${pace.behind} assignments behind`;
       return {
         id: c.id,
         course: label,
-        tone: "yellow",
+        tone: pace.status === "farbehind" ? "red" : "yellow",
         prompt: next
-          ? `${label} is ${Math.abs(c.paceDeltaDays)} days behind pace — ask what's blocking "${next.name}".`
-          : `${label} is ${Math.abs(c.paceDeltaDays)} days behind pace — ask what's slowing it down.`,
-        why: `${c.assignmentsSubmitted} of ${c.assignmentsTotal} assignments done${grade}.`,
+          ? `${label} is ${gap} — ask what's blocking "${next.name}".`
+          : `${label} is ${gap} — ask what's slowing it down.`,
+        why: pace.detail || `${c.assignmentsSubmitted} of ${c.assignmentsTotal} assignments done${grade}.`,
       };
     }
 
