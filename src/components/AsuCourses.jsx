@@ -2,6 +2,7 @@ import React from "react";
 import { ExternalLink } from "lucide-react";
 import { useAsuProgress } from "../hooks/useAsuProgress.js";
 import { launchApp } from "../utils/launch.js";
+import { assignmentPace } from "../services/pace.js";
 
 /**
  * AsuCourses — per-course progress for Jackson's ASU Prep (Canvas)
@@ -14,8 +15,11 @@ import { launchApp } from "../utils/launch.js";
  * tracks a handful of checkpoints and reads absurdly high).
  *
  * The pace tick on each bar marks where he SHOULD be today (linear
- * between course start/end dates); the chip translates the gap into
- * days ahead/behind.
+ * between course start/end dates); the chip states the gap in
+ * ASSIGNMENTS, which is countable against Canvas. Days appear only in
+ * the tooltip, and are derived from his own observed rate rather than
+ * the ideal one — see services/pace.js for why that distinction
+ * matters.
  *
  * NOTE: the Canvas token identifies one student (Jackson), so this
  * section must only render on his dashboard — App.jsx gates it with
@@ -59,12 +63,18 @@ function CourseRow({ course }) {
   const pct = clampPct(course.completionPct);
   const expected = clampPct(course.expectedPct);
   const hasBar = pct !== null;
+  const pace = assignmentPace({
+    assignmentsTotal: course.assignmentsTotal,
+    assignmentsSubmitted: course.assignmentsSubmitted,
+    expectedPct: course.expectedPct,
+    startAt: course.startAt,
+  });
 
   return (
     <div
       className="asu-row"
       role="listitem"
-      aria-label={ariaLabel(course, pct, expected)}
+      aria-label={ariaLabel(course, pct, pace)}
     >
       <div className="asu-row-head">
         <button
@@ -87,7 +97,7 @@ function CourseRow({ course }) {
               {course.currentGrade}
             </span>
           )}
-          <PaceChip course={course} />
+          <PaceChip pace={pace} />
         </div>
       </div>
 
@@ -112,22 +122,20 @@ function CourseRow({ course }) {
   );
 }
 
-// Pace chip: labeled, calm, and honest. Within ±3 days = "On pace";
-// behind goes yellow then red past a week, ahead goes green.
-function PaceChip({ course }) {
-  const days = course.paceDeltaDays;
-  if (days === null || days === undefined) return null;
-
-  let cls = "onpace";
-  let label = "On pace";
-  if (days > 3) {
-    cls = "ahead";
-    label = `${days} days ahead`;
-  } else if (days < -3) {
-    cls = days <= -7 ? "farbehind" : "behind";
-    label = `${Math.abs(days)} days behind`;
-  }
-  return <span className={`asu-pace asu-pace-${cls}`}>{label}</span>;
+// Pace chip: labeled, calm, and honest. The headline is a COUNT of
+// assignments, because that is the thing Jackson can actually go and
+// do; the days figure lives in the tooltip and comes from his own
+// average pace, not the ideal one.
+function PaceChip({ pace }) {
+  if (!pace || !pace.label) return null;
+  return (
+    <span
+      className={`asu-pace asu-pace-${pace.status}`}
+      title={pace.detail || undefined}
+    >
+      {pace.label}
+    </span>
+  );
 }
 
 // ---- helpers ----
@@ -152,10 +160,10 @@ function gradeTitle(course) {
     : `Current grade: ${course.currentGrade}`;
 }
 
-function ariaLabel(course, pct, expected) {
+function ariaLabel(course, pct, pace) {
   const bits = [cleanName(course.name)];
   if (pct !== null) bits.push(`${Math.round(pct)} percent of assignments done`);
-  if (expected !== null) bits.push(`expected ${Math.round(expected)} percent by today`);
+  if (pace && pace.label) bits.push(pace.label);
   if (course.currentGrade) bits.push(`current grade ${course.currentGrade}`);
   return bits.join(", ");
 }

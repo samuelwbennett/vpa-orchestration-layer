@@ -1,6 +1,7 @@
 import React from "react";
 import { ExternalLink, MessageCircle } from "lucide-react";
 import { courseLabel } from "../services/talkPrompts.js";
+import { assignmentPace } from "../services/pace.js";
 
 /**
  * ParentCourses — grades, pace and what he's actually working on,
@@ -94,6 +95,12 @@ function MathAcademyRow({ app }) {
 function CourseRow({ course }) {
   const pct = Number.isFinite(course.completionPct) ? course.completionPct : null;
   const next = course.nextAssignments || [];
+  const pace = assignmentPace({
+    assignmentsTotal: course.assignmentsTotal,
+    assignmentsSubmitted: course.assignmentsSubmitted,
+    expectedPct: course.expectedPct,
+    startAt: course.startAt,
+  });
 
   return (
     <div className="pcourse-row">
@@ -126,7 +133,7 @@ function CourseRow({ course }) {
               {course.currentGrade}
             </span>
           )}
-          <PaceChip days={course.paceDeltaDays} />
+          <PaceChip pace={pace} />
         </div>
       </div>
 
@@ -163,18 +170,24 @@ function CourseRow({ course }) {
   );
 }
 
-function PaceChip({ days }) {
-  if (!Number.isFinite(days)) return null;
-  let cls = "onpace";
-  let label = "On pace";
-  if (days > 3) {
-    cls = "ahead";
-    label = `${days}d ahead`;
-  } else if (days < -3) {
-    cls = days <= -7 ? "farbehind" : "behind";
-    label = `${Math.abs(days)}d behind`;
-  }
-  return <span className={`asu-pace asu-pace-${cls}`}>{label}</span>;
+// Compact form of the same honest number the student view shows:
+// a COUNT of assignments, not days against an ideal line. The full
+// sentence (including days at his own average pace) is the tooltip.
+function PaceChip({ pace }) {
+  if (!pace || !pace.label) return null;
+  return (
+    <span
+      className={`asu-pace asu-pace-${pace.status}`}
+      title={pace.detail || undefined}
+    >
+      {shortLabel(pace)}
+    </span>
+  );
+}
+
+// "4 assignments behind" -> "4 behind" for the tighter parent rows.
+function shortLabel(pace) {
+  return String(pace.label).replace(/ assignments? /, " ");
 }
 
 /** The "Talk with Jackson about ___" list. */
