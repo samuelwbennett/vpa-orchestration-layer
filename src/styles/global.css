@@ -2648,6 +2648,11 @@ a { color: inherit; text-decoration: none; }
 .asu-pace-ahead     { background: var(--green-soft);  color: #1f7a37; }
 .asu-pace-behind    { background: var(--yellow-soft); color: #a86a00; }
 .asu-pace-farbehind { background: var(--red-soft);    color: #a31b14; }
+/* Added 2026-09-11 with the assignments-behind chip. "Not started" is
+   a statement of fact, not a scolding, so it stays neutral grey
+   rather than red; "Complete" earns the green. */
+.asu-pace-notstarted { background: var(--surface-2); color: var(--text-muted); }
+.asu-pace-complete   { background: var(--green-soft); color: #1f7a37; }
 
 .asu-bar-line {
   display: flex;
@@ -3105,6 +3110,8 @@ a { color: inherit; text-decoration: none; }
 .talk-icon { flex: 0 0 auto; margin-top: 2px; color: var(--text-subtle); }
 .talk-yellow .talk-icon { color: var(--yellow); }
 .talk-green .talk-icon { color: var(--green); }
+/* farbehind courses raise a red prompt (added 2026-09-11) */
+.talk-red .talk-icon { color: var(--red); }
 .talk-prompt { font-size: 14px; line-height: 1.45; }
 .talk-why {
   margin-top: 3px;
