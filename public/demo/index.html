@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A walkthrough of the Vail Performance Academy student and parent dashboards, using a composite sample student.">
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>VPA Learning OS — Vail Performance Academy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&display=swap">
+<style>
+  /* ============================================================
+     VPA Learning OS — prospective-family demo
+     Palette and UI grammar inherited from the live app's
+     src/styles/global.css (Apple-like, calm, iOS system hues).
+     Demo chrome uses Archivo so the frame reads as frame,
+     and the product surface reads as product.
+     ============================================================ */
+
+  :root {
+    color-scheme: light;
+
+    /* neutrals, biased a half-step cool toward the MA blue */
+    --bg: #f1f2f5;
+    --surface: #ffffff;
+    --surface-2: #f8f9fb;
+    --border: #e3e4ea;
+    --border-strong: #d2d4dc;
+    --text: #1d1d1f;
+    --text-muted: #6a6b73;
+    --text-subtle: #8d8e97;
+
+    /* demo chrome */
+    --ink: #16171c;
+    --ink-2: #23252c;
+    --on-ink: #f3f4f7;
+    --on-ink-muted: #9fa1ad;
+
+    /* semantic */
+    --green: #1f9d4d;
+    --green-soft: #e6f6ec;
+    --yellow: #b5730a;
+    --yellow-soft: #fdf2e0;
+    --red: #d02a20;
+    --red-soft: #fdeceb;
+    --blue: #0071e3;
+    --blue-soft: #e9f1fe;
+
+    /* per-app hues */
+    --ring-math-academy: #0a84ff;
+    --ring-math-facts: #e63a30;
+    --ring-asu: #8c1d40;
+    --ring-writing: #9b51e0;
+    --track: #e8e9ee;
+
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(16, 18, 28, .05);
+    --shadow-md: 0 6px 22px rgba(16, 18, 28, .07);
+
+    --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+          "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0c0d10;
+      --surface: #17181d;
+      --surface-2: #1e1f25;
+      --border: #2b2d35;
+      --border-strong: #3a3d47;
+      --text: #f2f3f6;
+      --text-muted: #a0a2ac;
+      --text-subtle: #7e808b;
+      --ink: #000000;
+      --ink-2: #16171c;
+      --on-ink: #f3f4f7;
+      --on-ink-muted: #9fa1ad;
+      --green: #4ad06e;
+      --green-soft: #10291a;
+      --yellow: #f0a33a;
+      --yellow-soft: #2b2110;
+      --red: #ff6b60;
+      --red-soft: #2e1513;
+      --blue: #4da3ff;
+      --blue-soft: #101f31;
+      --ring-math-academy: #3d9dff;
+      --ring-math-facts: #ff6b60;
+      --ring-asu: #c9557a;
+      --ring-writing: #b47cf0;
+      --track: #282a32;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+      --shadow-md: 0 6px 22px rgba(0, 0, 0, .45);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0c0d10;
+    --surface: #17181d;
+    --surface-2: #1e1f25;
+    --border: #2b2d35;
+    --border-strong: #3a3d47;
+    --text: #f2f3f6;
+    --text-muted: #a0a2ac;
+    --text-subtle: #7e808b;
+    --ink: #000000;
+    --ink-2: #16171c;
+    --on-ink: #f3f4f7;
+    --on-ink-muted: #9fa1ad;
+    --green: #4ad06e;
+    --green-soft: #10291a;
+    --yellow: #f0a33a;
+    --yellow-soft: #2b2110;
+    --red: #ff6b60;
+    --red-soft: #2e1513;
+    --blue: #4da3ff;
+    --blue-soft: #101f31;
+    --ring-math-academy: #3d9dff;
+    --ring-math-facts: #ff6b60;
+    --ring-asu: #c9557a;
+    --ring-writing: #b47cf0;
+    --track: #282a32;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow-md: 0 6px 22px rgba(0, 0, 0, .45);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+
+  /* ---------- demo chrome ---------- */
+
+  .chrome {
+    background: var(--ink);
+    color: var(--on-ink);
+    padding-block: 18px 0;
+  }
+  .chrome-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 28px;
+  }
+  .mark {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .mark span { display: block; font-size: 11px; font-weight: 500; letter-spacing: .1em; color: var(--on-ink-muted); }
+  .chrome-copy { flex: 1 1 260px; min-width: 0; }
+  .chrome-copy h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(19px, 2.4vw, 24px);
+    letter-spacing: -.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .chrome-copy p { margin: 4px 0 0; font-size: 13.5px; color: var(--on-ink-muted); max-width: 62ch; }
+
+  .tabs {
+    max-width: 1160px;
+    margin: 18px auto 0;
+    padding: 0 20px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .tab {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 13.5px;
+    letter-spacing: .02em;
+    padding: 11px 20px;
+    border-radius: 12px 12px 0 0;
+    color: var(--on-ink-muted);
+    background: var(--ink-2);
+    transition: color .15s, background .15s;
+  }
+  .tab:hover { color: var(--on-ink); }
+  .tab[aria-selected="true"] { background: var(--bg); color: var(--text); }
+  .tabs .spacer { flex: 1; }
+  .demo-chip {
+    align-self: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--on-ink-muted);
+    border: 1px solid #3a3d47;
+    border-radius: 999px;
+    padding: 5px 11px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+  }
+
+  /* ---------- product surface ---------- */
+
+  .shell {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 40px 20px 24px;
+  }
+  .panel[hidden] { display: none; }
+
+  .section { margin-top: 38px; }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+    margin: 0 0 13px 3px;
+  }
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 26px;
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px 24px;
+  }
+  .eyebrow { font-size: 13px; color: var(--text-muted); }
+  .head h2 {
+    font-size: clamp(26px, 3.4vw, 33px);
+    font-weight: 600;
+    letter-spacing: -.022em;
+    margin: 5px 0 0;
+  }
+  .head .who { margin-top: 3px; color: var(--text-muted); font-size: 14.5px; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+  .status.green { background: var(--green-soft); color: var(--green); }
+  .status.yellow { background: var(--yellow-soft); color: var(--yellow); }
+  .status.red { background: var(--red-soft); color: var(--red); }
+
+  /* rings */
+  .rings {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 26px;
+  }
+  .ring-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 8px 18px;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .18s, transform .18s;
+  }
+  .ring-tile.clickable { cursor: pointer; }
+  .ring-tile.clickable:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .ring-tile.locked { opacity: .72; }
+  .ring-wrap { position: relative; width: 124px; height: 124px; }
+  .ring-wrap svg { display: block; }
+  .ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ring-xp { font-size: 27px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .ring-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+  .ring-name { font-size: 13.5px; font-weight: 500; text-align: center; }
+  .ring-name small { display: block; font-weight: 400; font-size: 11.5px; color: var(--text-subtle); }
+  .tip {
+    position: absolute;
+    bottom: calc(100% - 6px);
+    left: 50%;
+    transform: translate(-50%, 4px);
+    width: 214px;
+    background: var(--ink);
+    color: var(--on-ink);
+    border-radius: 12px;
+    padding: 11px 13px;
+    font-size: 12.5px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .16s, transform .16s;
+    z-index: 5;
+    box-shadow: var(--shadow-md);
+  }
+  .ring-tile:hover .tip, .ring-tile:focus-visible .tip { opacity: 1; transform: translate(-50%, 0); }
+  .tip-row { display: flex; justify-content: space-between; gap: 10px; }
+  .tip-row.main { font-weight: 600; margin-bottom: 5px; }
+  .tip-row .k { color: var(--on-ink-muted); }
+  .tip-next { margin-top: 7px; padding-top: 7px; border-top: 1px solid #33353e; color: var(--on-ink-muted); }
+
+  /* today plan */
+  .plan {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px 28px;
+    border-left: 4px solid var(--blue);
+  }
+  .plan .label {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--blue);
+  }
+  .plan h3 { font-size: 23px; font-weight: 600; letter-spacing: -.018em; margin: 8px 0 0; text-wrap: balance; }
+  .plan .why { margin: 7px 0 0; color: var(--text-muted); max-width: 56ch; }
+  .plan .rollup { margin: 14px 0 0; font-size: 13.5px; color: var(--text-muted); }
+  .plan .rollup strong { color: var(--text); font-variant-numeric: tabular-nums; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--blue); color: #fff;
+    padding: 12px 20px; border-radius: 999px;
+    font-size: 14.5px; font-weight: 600;
+    text-decoration: none; white-space: nowrap;
+    transition: filter .15s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border-strong); }
+
+  /* two column */
+  .cols { display: grid; grid-template-columns: 1.45fr 1fr; gap: 22px; align-items: start; }
+
+  /* insights */
+  .insight { display: flex; gap: 11px; padding: 13px 0; border-top: 1px solid var(--border); font-size: 14px; }
+  .insight:first-of-type { border-top: none; padding-top: 0; }
+  .insight .ico { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+  .insight.warn .ico { color: var(--yellow); }
+  .insight.info .ico { color: var(--blue); }
+  .insight.good .ico { color: var(--green); }
+  .insight strong { font-weight: 600; }
+
+  /* day strip */
+  .day { display: flex; flex-wrap: wrap; gap: 8px; }
+  .day-chip {
+    display: inline-flex; align-items: baseline; gap: 7px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 13px; font-size: 13px;
+  }
+  .day-chip b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .day-chip.now { background: var(--blue-soft); border-color: transparent; color: var(--blue); }
+
+  /* course rows */
+  .rows { display: flex; flex-direction: column; gap: 20px; }
+  .row-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 14px; }
+  .course-name {
+    font-size: 15px; font-weight: 600; letter-spacing: -.01em;
+    display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+  }
+  .course-name:hover { color: var(--blue); }
+  .row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text-muted); }
+  .grade {
+    font-weight: 600; color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 2px 8px; font-variant-numeric: tabular-nums;
+  }
+  .chip { border-radius: 999px; padding: 3px 10px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+  .chip.green { background: var(--green-soft); color: var(--green); }
+  .chip.yellow { background: var(--yellow-soft); color: var(--yellow); }
+  .chip.red { background: var(--red-soft); color: var(--red); }
+  .chip.neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+
+  .bar-line { display: flex; align-items: center; gap: 12px; margin-top: 9px; }
+  .bar {
+    position: relative; flex: 1; height: 9px;
+    background: var(--track); border-radius: 999px; overflow: visible;
+  }
+  .bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--ring-asu); }
+  .bar-fill.ma { background: var(--ring-math-academy); }
+  .bar-tick {
+    position: absolute; top: -4px; bottom: -4px; width: 2px;
+    background: var(--text-subtle); border-radius: 2px;
+  }
+  .bar-pct { font-size: 12.5px; color: var(--text-muted); width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+  .topics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .topic {
+    font-size: 12px; padding: 4px 10px; border-radius: 7px;
+    background: var(--blue-soft); color: var(--blue); font-weight: 500;
+  }
+  .topic.next { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); font-weight: 400; }
+  .asof { margin-top: 18px; font-size: 12px; color: var(--text-subtle); }
+
+  /* load */
+  .load-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+  .load-why { font-size: 13.5px; color: var(--text-muted); max-width: 58ch; }
+  .meters { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+  .meter { display: grid; grid-template-columns: 78px 1fr auto; align-items: center; gap: 12px; }
+  .meter-label { font-size: 13px; font-weight: 500; }
+  .meter-track { position: relative; height: 8px; background: var(--track); border-radius: 999px; }
+  .meter-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
+  .meter-fill.learn { background: var(--ring-math-academy); }
+  .meter-fill.phys { background: var(--green); }
+  .meter-norm { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--text-subtle); }
+  .meter-val { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .sevenday { display: flex; align-items: flex-end; gap: 10px; margin-top: 22px; height: 92px; }
+  .sd-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; height: 100%; }
+  .sd-bars { flex: 1; display: flex; align-items: flex-end; gap: 3px; width: 100%; justify-content: center; }
+  .sd-bar { width: 11px; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .sd-bar.learn { background: var(--ring-math-academy); }
+  .sd-bar.phys { background: var(--green); }
+  .sd-label { font-size: 11px; color: var(--text-subtle); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: 12px; color: var(--text-muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 9px; height: 9px; border-radius: 2px; }
+
+  .checkin { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .checkin-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; display: flex; gap: 8px; align-items: baseline; }
+  .checkin-title em { font-style: normal; font-weight: 500; color: var(--text-subtle); font-size: 12px; }
+  .checkin-title em.done { color: var(--green); }
+  .cr-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 9px; }
+  .cr-row > .k { width: 78px; font-size: 12.5px; color: var(--text-muted); flex: none; }
+  .cr {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .cr:hover { border-color: var(--border-strong); }
+  .cr[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .load-hint { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+
+  /* weekly + leaderboard */
+  .stats { display: flex; flex-wrap: wrap; gap: 26px 34px; }
+  .stat .n { font-size: 30px; font-weight: 600; letter-spacing: -.024em; font-variant-numeric: tabular-nums; }
+  .stat .k { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+  .week { display: flex; align-items: flex-end; gap: 10px; height: 86px; margin-top: 24px; }
+  .week-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; height: 100%; }
+  .week-slot { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+  .week-bar { width: 100%; max-width: 34px; background: var(--blue-soft); border-radius: 5px 5px 0 0; min-height: 3px; }
+  .week-bar.today { background: var(--blue); }
+  .week-val { font-size: 11px; color: var(--text-subtle); font-variant-numeric: tabular-nums; }
+
+  .lb { display: flex; flex-direction: column; gap: 18px; }
+  .lb-group h4 {
+    font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--text-subtle); margin: 0 0 8px;
+  }
+  .lb-line { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 3px 0; }
+  .lb-line.me { font-weight: 600; }
+  .lb-line .v { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .lb-line.me .v { color: var(--text); }
+  .pb { background: var(--green-soft); color: var(--green); border-radius: var(--radius-sm); padding: 11px 13px; font-size: 13px; font-weight: 600; }
+
+  /* parent talk prompts */
+  .prompt { padding: 16px 0; border-top: 1px solid var(--border); }
+  .prompt:first-of-type { border-top: none; padding-top: 0; }
+  .prompt .q { font-size: 15px; letter-spacing: -.005em; }
+  .prompt .src { margin-top: 5px; font-size: 12.5px; color: var(--text-subtle); }
+  .prompt .cls {
+    font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-subtle); margin-bottom: 5px;
+  }
+
+  /* pace projector */
+  details.proj { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+  details.proj > summary {
+    list-style: none; cursor: pointer; padding: 22px 26px;
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    font-weight: 600; font-size: 15px;
+  }
+  details.proj > summary::-webkit-details-marker { display: none; }
+  details.proj > summary .hint { font-weight: 400; font-size: 13px; color: var(--text-muted); }
+  details.proj > summary::after { content: "＋"; color: var(--text-subtle); font-size: 16px; }
+  details.proj[open] > summary::after { content: "－"; }
+  .proj-body { padding: 0 26px 26px; }
+  .proj-row {
+    display: grid; grid-template-columns: 1.1fr 1.3fr auto; align-items: center;
+    gap: 10px 18px; padding: 15px 0; border-top: 1px solid var(--border);
+  }
+  .proj-row .nm { font-size: 14px; font-weight: 500; }
+  .proj-row .nm small { display: block; font-weight: 400; font-size: 12px; color: var(--text-subtle); }
+  .proj-ctl { display: flex; align-items: center; gap: 11px; }
+  .proj-ctl input[type="range"] { flex: 1; min-width: 110px; accent-color: var(--blue); }
+  .proj-ctl .rate { font-size: 12.5px; color: var(--text-muted); width: 96px; font-variant-numeric: tabular-nums; }
+  .proj-out { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .proj-out .d { font-weight: 600; }
+  .proj-note { margin-top: 16px; font-size: 12.5px; color: var(--text-subtle); max-width: 70ch; }
+
+
+  /* ---------- day timeline (hours) ---------- */
+  .tl-scroll { overflow-x: auto; padding-bottom: 4px; }
+  .tl-inner { min-width: 620px; }
+  .tl {
+    position: relative; height: 62px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .tl-block {
+    position: absolute; top: 7px; bottom: 7px;
+    border-radius: 8px; padding: 0 10px;
+    display: flex; align-items: center;
+    font-size: 12px; font-weight: 600; color: #fff;
+    overflow: hidden; white-space: nowrap;
+  }
+  .tl-block.academic { background: var(--ring-math-academy); }
+  .tl-block.training { background: var(--green); }
+  .tl-block.recovery { background: var(--ring-writing); }
+  .tl-block.other {
+    background: transparent; border: 1px dashed var(--border-strong);
+    color: var(--text-subtle); font-weight: 500;
+  }
+  .tl-now { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--text); border-radius: 2px; }
+  .tl-now::after {
+    content: "now"; position: absolute; top: -17px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text);
+  }
+  .tl-pin {
+    position: absolute; top: 0; width: 9px; height: 9px; margin: -5px 0 0 -4px;
+    border-radius: 50%; background: var(--surface); border: 2px solid var(--ring-math-academy);
+  }
+  .tl-axis { position: relative; height: 18px; margin-top: 6px; }
+  .tl-axis span {
+    position: absolute; transform: translateX(-50%);
+    font-size: 11px; color: var(--text-subtle); font-variant-numeric: tabular-nums;
+  }
+  .hours-tally { display: flex; flex-wrap: wrap; gap: 18px 30px; margin-top: 22px; }
+  .ht { display: flex; flex-direction: column; gap: 2px; }
+  .ht .n { font-size: 21px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .ht .k { font-size: 12px; color: var(--text-muted); }
+  .ht .n .u { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-left: 2px; }
+  .hours-note { margin-top: 18px; font-size: 12.5px; color: var(--text-subtle); max-width: 74ch; }
+  .day-chip.done { opacity: .55; }
+
+  /* ---------- year ---------- */
+  .yr-scroll { overflow-x: auto; padding-bottom: 4px; }
+  .yr-inner { min-width: 660px; }
+  .yr-months { position: relative; height: 20px; margin-bottom: 8px; }
+  .yr-months span {
+    position: absolute; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--text-subtle);
+  }
+  .yr-band { position: relative; height: 40px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+  .yr-band + .yr-band { margin-top: 8px; }
+  .yr-seg {
+    position: absolute; top: 5px; bottom: 5px; border-radius: 7px;
+    display: flex; align-items: center; padding: 0 10px;
+    font-size: 11.5px; font-weight: 600; color: #fff; overflow: hidden; white-space: nowrap;
+  }
+  .yr-seg.term { background: var(--ring-math-academy); }
+  .yr-seg.term2 { background: #3c6df0; }
+  .yr-seg.break { background: transparent; border: 1px dashed var(--border-strong); color: var(--text-subtle); font-weight: 500; }
+  .yr-seg.race { background: var(--ring-asu); }
+  .yr-seg.camp { background: var(--green); }
+  .yr-seg.champs { background: var(--yellow); color: #fff; }
+  .yr-row-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-subtle); margin: 16px 0 7px;
+  }
+  .yr-now { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--text); border-radius: 2px; z-index: 2; }
+  .yr-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; font-size: 12px; color: var(--text-muted); }
+  .yr-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .explain { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .explain h4 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 7px; }
+  .explain p { margin: 0; font-size: 13.5px; color: var(--text-muted); }
+  @media (max-width: 900px) { .explain { grid-template-columns: 1fr; } }
+
+  /* footer */
+  .footer { background: var(--ink); color: var(--on-ink); margin-top: 56px; padding-block: 40px 46px; }
+  .footer-inner { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+  .footer h3 { font-family: var(--display); font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+  .footer p { margin: 0; color: var(--on-ink-muted); font-size: 13.5px; max-width: 64ch; }
+  .links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 26px; }
+  .link-card {
+    display: block; text-decoration: none;
+    background: var(--ink-2); border: 1px solid #30323b; border-radius: var(--radius-md);
+    padding: 16px 18px; transition: border-color .15s, transform .15s;
+  }
+  .link-card:hover { border-color: #55596a; transform: translateY(-2px); }
+  .link-card .t { font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; gap: 10px; }
+  .link-card .d { margin-top: 4px; font-size: 12.5px; color: var(--on-ink-muted); }
+  .fine { margin-top: 26px; font-size: 12px; color: var(--on-ink-muted); }
+
+  @media (max-width: 900px) {
+    .cols { grid-template-columns: 1fr; }
+    .rings { grid-template-columns: repeat(2, 1fr); }
+    .links { grid-template-columns: 1fr; }
+    .proj-row { grid-template-columns: 1fr; }
+    .proj-out { text-align: left; }
+  }
+  @media (max-width: 640px) {
+    .tabs { flex-wrap: wrap; }
+    .tabs .spacer { display: none; }
+    .demo-chip { order: -1; width: 100%; white-space: normal; margin: 0 0 12px; text-align: center; }
+    .tip { display: none; }
+  }
+  @media (max-width: 520px) {
+    .shell { padding-top: 28px; }
+    .tab { padding: 10px 14px; }
+    .meter { grid-template-columns: 68px 1fr; }
+    .meter-val { grid-column: 1 / -1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+</head>
+<body>
+<div class="chrome">
+  <div class="chrome-inner">
+    <div class="mark">VPA<span>Vail Performance Academy</span></div>
+    <div class="chrome-copy">
+      <h1>A school day, seen from the inside</h1>
+      <p>This is the dashboard a VPA student opens each morning and the view their parents get. Everything below is live and clickable — the student and parent tabs, the rings, the check-in, the pace projector.</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Choose a view">
+    <button class="tab" role="tab" id="tab-student" aria-controls="panel-student" aria-selected="true" data-view="student">Student view</button>
+    <button class="tab" role="tab" id="tab-parent" aria-controls="panel-parent" aria-selected="false" data-view="parent">Parent view</button>
+    <button class="tab" role="tab" id="tab-year" aria-controls="panel-year" aria-selected="false" data-view="year">The year</button>
+    <span class="spacer"></span>
+    <span class="demo-chip">Sample student · illustrative data</span>
+  </div>
+</div>
+
+<main class="shell">
+  <section class="panel" id="panel-student" role="tabpanel" aria-labelledby="tab-student"></section>
+  <section class="panel" id="panel-parent" role="tabpanel" aria-labelledby="tab-parent" hidden></section>
+  <section class="panel" id="panel-year" role="tabpanel" aria-labelledby="tab-year" hidden></section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <h3>The apps behind the dashboard</h3>
+    <p>VPA doesn't replace the tools — it orchestrates them. Every ring and course row above launches into the real thing, and every number is read back from that tool's own API.</p>
+    <div class="links">
+      <a class="link-card" href="https://www.mathacademy.com/" target="_blank" rel="noopener">
+        <span class="t">Math Academy <span aria-hidden="true">↗</span></span>
+        <span class="d">Mastery-based math, 4th grade through university. WASC-accredited, adaptive, and the engine behind the blue ring.</span>
+      </a>
+      <a class="link-card" href="https://math-facts-trainer.vercel.app" target="_blank" rel="noopener">
+        <span class="t">Math Facts <span aria-hidden="true">↗</span></span>
+        <span class="d">VPA's own fluency trainer. Eight minutes a day on the operations that are actually slow.</span>
+      </a>
+      <a class="link-card" href="https://www.asuprepglobal.org/" target="_blank" rel="noopener">
+        <span class="t">ASU Prep Global <span aria-hidden="true">↗</span></span>
+        <span class="d">Accredited coursework and the transcript that goes to admissions offices.</span>
+      </a>
+    </div>
+    <p class="fine">Demo built for a prospective family. The student is composite and the figures are illustrative — no real student's grades appear on this page. Course structure, pacing math, grading windows and the load model match what VPA actually runs.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ==========================================================
+     Demo data. Dates are pegged to the day the page is opened
+     so the semester always reads as a live one in progress.
+     ========================================================== */
+
+  var MS_DAY = 86400000;
+
+  // "Today" = the day this is opened, rolled back to Friday on a weekend.
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (today.getDay() === 6) today = new Date(today - MS_DAY);
+  if (today.getDay() === 0) today = new Date(today - 2 * MS_DAY);
+
+  var SEM_DAYS = 122;          // Aug 18 -> Dec 18 in a real VPA semester
+  var DAYS_ELAPSED = 24;       // ~3.5 weeks in
+  var semStart = new Date(+today - DAYS_ELAPSED * MS_DAY);
+  var semEnd = new Date(+semStart + SEM_DAYS * MS_DAY);
+  var expectedPct = (DAYS_ELAPSED / SEM_DAYS) * 100;   // 19.7%
+  var weeksElapsed = DAYS_ELAPSED / 7;                 // 3.43
+
+  var student = { first: "Alex", full: "Alex Reyes", grade: 10, sport: "Nordic skiing" };
+
+  var LINKS = {
+    ma: "https://www.mathacademy.com/students/36411/activity",
+    mf: "https://math-facts-trainer.vercel.app",
+    asu: "https://global.asuprep.org/PublicWelcome.aspx",
+    canvas: "https://poweredbyasupd.instructure.com"
+  };
+
+  var apps = [
+    { id: "math-academy", name: "Math Academy", color: "var(--ring-math-academy)", hex: "#0a84ff",
+      dailyGoal: 40, todayXP: 25, weeklyXP: 290, status: "in_progress", link: LINKS.ma,
+      next: "Continue Algebra II — Rational Expressions" },
+    { id: "math-facts", name: "Math Facts", color: "var(--ring-math-facts)", hex: "#e63a30",
+      dailyGoal: 100, todayXP: 100, weeklyXP: 520, status: "complete", link: LINKS.mf,
+      next: "Division is still the slowest operation — ÷7 and ÷8" },
+    { id: "asu-prep", name: "ASU Prep", sub: "Accredited courses", color: "var(--ring-asu)", hex: "#8c1d40",
+      dailyGoal: 0, todayXP: 0, weeklyXP: 0, status: "link_only", link: LINKS.asu,
+      next: "3 assignments due in the next 7 days" },
+    { id: "writing", name: "Writing Lab", sub: "Coming soon", color: "var(--ring-writing)", hex: "#9b51e0",
+      dailyGoal: 0, todayXP: 0, weeklyXP: 0, status: "coming_soon", link: null, next: null }
+  ];
+
+  var maCourse = {
+    name: "Algebra II",
+    pct: 61,
+    grade: 92,
+    xpRemaining: 4180,
+    learning: ["Rational Expressions", "Solving Rational Equations", "Inverse Functions"],
+    review: ["Logarithms", "Systems of Equations"]
+  };
+
+  // ASU Prep (Canvas) courses. completion = assignments submitted / published.
+  var courses = [
+    { id: "eng", name: "English 10A", submitted: 14, total: 71, grade: "B+ 88.4",
+      nextUp: ["Professional Writing Module Exam", "Discussion Based Assessment #2"] },
+    { id: "phy", name: "Physics A Honors", submitted: 16, total: 67, grade: "A 94.1",
+      nextUp: ["Unit Activity: Kinematics 2", "Lab Report: Free Fall"] },
+    { id: "his", name: "World History A", submitted: 7, total: 48, grade: "A− 90.6",
+      nextUp: ["Unit 3 Document Analysis", "Unit 3 Discussion"] }
+  ];
+  courses.forEach(function (c) {
+    c.pct = (c.submitted / c.total) * 100;
+    c.deltaDays = ((c.pct - expectedPct) / 100) * SEM_DAYS;
+    c.perWeek = c.submitted / weeksElapsed;
+  });
+
+  // 7 days ending today: XP, learning minutes, physical minutes.
+  var week = [
+    { xp: 40,  learn: 22, phys: 0,   rated: true },
+    { xp: 0,   learn: 0,  phys: 140, rated: false },
+    { xp: 220, learn: 96, phys: 55,  rated: true },
+    { xp: 165, learn: 71, phys: 80,  rated: true },
+    { xp: 190, learn: 84, phys: 115, rated: true },
+    { xp: 110, learn: 48, phys: 60,  rated: true },
+    { xp: 125, learn: 78, phys: 95,  rated: true }   // today
+  ];
+  week.forEach(function (d, i) {
+    d.date = new Date(+today - (6 - i) * MS_DAY);
+  });
+  var todayLoad = week[6];
+  var learnRatio = 1.2, physRatio = 1.4;   // vs 28-day normal
+  var ratedCount = week.filter(function (d) { return d.rated; }).length;
+
+  var dayPlan = [
+    { t: "8:00", what: "Academic block", h: 8 },
+    { t: "9:00", what: "Advisory check-in", h: 9 },
+    { t: "12:45", what: "Physics lab", h: 12.75 },
+    { t: "3:30", what: "Nordic — threshold intervals", h: 15.5 },
+    { t: "6:00", what: "Study hall", h: 18 }
+  ];
+
+  // The demo is shown "as of" late afternoon: the academic block is done,
+  // training is done, study hall is still ahead. Every number below is
+  // consistent with that clock.
+  var NOW_H = 17.25;              // 5:15 PM
+  var TL_START = 7, TL_END = 20;  // timeline window
+
+  var dayBlocks = [
+    { s: 8,     e: 12,    kind: "academic", label: "Academic block", detail: "ASU coursework · Math Academy · seminar" },
+    { s: 12,    e: 12.75, kind: "other",    label: "Lunch" },
+    { s: 12.75, e: 13.5,  kind: "academic", label: "Physics lab", detail: "ASU Prep live session" },
+    { s: 13.5,  e: 15.5,  kind: "other",    label: "Open" },
+    { s: 15.5,  e: 17.08, kind: "training", label: "Nordic intervals", detail: "threshold session, 1h 35m" },
+    { s: 17.08, e: 17.83, kind: "recovery", label: "Recovery", detail: "mobility and stretch, 45m" },
+    { s: 18,    e: 19,    kind: "academic", label: "Study hall", detail: "optional" }
+  ];
+  var dayPins = [{ at: 9, label: "9:00 advisory check-in on Meet" }];
+
+  var leaderboard = {
+    weekly: [["Ava", 1240], ["Liam", 1105], ["Alex", 810]],
+    improved: [["Alex", 34], ["Noah", 28], ["Mia", 19]],
+    streak: [["Liam", 31], ["Ava", 24], ["Alex", 12]]
+  };
+
+  /* ---------- derived ---------- */
+
+  var scored = apps.filter(function (a) { return a.dailyGoal > 0; });
+  var goalsMet = scored.filter(function (a) { return a.todayXP >= a.dailyGoal; }).length;
+  var pctGoals = scored.reduce(function (s, a) {
+    return s + Math.min(1, a.todayXP / a.dailyGoal);
+  }, 0) / scored.length;
+
+  var xpToday = apps.reduce(function (s, a) { return s + a.todayXP; }, 0);
+  var xpWeek = apps.reduce(function (s, a) { return s + a.weeklyXP; }, 0);
+  var daysActive = week.filter(function (d) { return d.xp > 0; }).length;
+
+  var behindCourse = courses.slice().sort(function (a, b) { return a.deltaDays - b.deltaDays; })[0];
+
+  /* ---------- helpers ---------- */
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function fmtDate(d, opts) {
+    return d.toLocaleDateString("en-US", opts || { weekday: "long", month: "long", day: "numeric" });
+  }
+  function shortDate(d) {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  function mins(m) {
+    if (m < 60) return m + " min";
+    var h = Math.floor(m / 60), r = m % 60;
+    return r ? h + "h " + r + "m" : h + "h";
+  }
+  function paceChip(days) {
+    var d = Math.round(days);
+    if (Math.abs(d) <= 3) return '<span class="chip green">On pace</span>';
+    if (d > 0) return '<span class="chip green">' + d + " days ahead</span>";
+    if (d >= -6) return '<span class="chip yellow">' + Math.abs(d) + " days behind</span>";
+    return '<span class="chip red">' + Math.abs(d) + " days behind</span>";
+  }
+  function statusTone() {
+    if (pctGoals >= 0.85) return { cls: "green", label: "On track" };
+    if (pctGoals >= 0.5) return { cls: "yellow", label: "Slightly behind" };
+    return { cls: "red", label: "Needs attention" };
+  }
+  var ICON = {
+    warn: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    info: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+    good: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.8 10A10 10 0 1 1 17 3.3"/><path d="m9 11 3 3L22 4"/></svg>'
+  };
+
+  /* ---------- rings ---------- */
+
+  function ring(a) {
+    var size = 124, stroke = 12, r = (size - stroke) / 2, circ = 2 * Math.PI * r;
+    var locked = a.status === "coming_soon";
+    var linkOnly = a.status === "link_only";
+    var pct = (locked || linkOnly) ? 0 : Math.max(0, Math.min(1, a.todayXP / a.dailyGoal));
+    var trackTint = hexA(a.hex, linkOnly ? 0.28 : locked ? 0.10 : 0.16);
+
+    var center = locked
+      ? '<div class="ring-sub" style="font-weight:600;letter-spacing:.08em">SOON</div>'
+      : linkOnly
+        ? '<div class="ring-xp" style="font-size:22px">↗</div><div class="ring-sub">Open</div>'
+        : '<div class="ring-xp">' + a.todayXP + '</div><div class="ring-sub">of ' + a.dailyGoal + ' XP</div>';
+
+    var tip = locked ? "" : '<div class="tip" role="tooltip">' +
+      '<div class="tip-row main"><span>' + (linkOnly
+        ? "Opens ASU Prep's own dashboard"
+        : Math.round(pct * 100) + "% of today's goal") + '</span></div>' +
+      (linkOnly ? "" :
+        '<div class="tip-row"><span class="k">Today</span><span>' + a.todayXP + " / " + a.dailyGoal + ' XP</span></div>' +
+        '<div class="tip-row"><span class="k">This week</span><span>' + a.weeklyXP + ' XP</span></div>') +
+      (a.next ? '<div class="tip-next">' + esc(a.next) + "</div>" : "") + "</div>";
+
+    var tag = a.link ? "a" : "div";
+    var attrs = a.link
+      ? ' href="' + a.link + '" target="_blank" rel="noopener" class="ring-tile clickable" style="text-decoration:none;color:inherit"'
+      : ' class="ring-tile locked"';
+
+    return "<" + tag + attrs + ' aria-label="' + esc(a.name + (locked ? ": coming soon" : linkOnly ? ": open app" :
+        ": " + a.todayXP + " of " + a.dailyGoal + " XP")) + '">' +
+      '<div class="ring-wrap"><svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + " " + size + '">' +
+        '<g transform="rotate(-90 ' + size / 2 + " " + size / 2 + ')">' +
+          '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + trackTint + '" stroke-width="' + stroke + '"/>' +
+          (locked || linkOnly ? "" :
+          '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + a.color +
+          '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + circ +
+          '" stroke-dashoffset="' + (circ * (1 - pct)) + '"/>') +
+        "</g></svg>" +
+        '<div class="ring-center">' + center + "</div>" +
+      "</div>" +
+      '<div class="ring-name">' + esc(a.name) + (a.sub ? "<small>" + esc(a.sub) + "</small>" : "") + "</div>" +
+      tip + "</" + tag + ">";
+  }
+
+  function hexA(hex, a) {
+    return "rgba(" + parseInt(hex.slice(1, 3), 16) + "," + parseInt(hex.slice(3, 5), 16) +
+      "," + parseInt(hex.slice(5, 7), 16) + "," + a + ")";
+  }
+
+  /* ---------- shared blocks ---------- */
+
+  function courseRows(showNextUp) {
+    return courses.map(function (c) {
+      return '<div class="row">' +
+        '<div class="row-head">' +
+          '<a class="course-name" href="' + LINKS.canvas + '" target="_blank" rel="noopener">' +
+            esc(c.name) + '<span aria-hidden="true" style="font-size:11px">↗</span></a>' +
+          '<div class="row-meta">' +
+            "<span>" + c.submitted + " of " + c.total + " assignments</span>" +
+            '<span class="grade">' + esc(c.grade) + "</span>" +
+            paceChip(c.deltaDays) +
+          "</div>" +
+        "</div>" +
+        '<div class="bar-line"><span class="bar">' +
+          '<span class="bar-fill" style="width:' + c.pct.toFixed(1) + '%"></span>' +
+          '<span class="bar-tick" style="left:' + expectedPct.toFixed(1) + '%" title="Where he should be today"></span>' +
+        '</span><span class="bar-pct">' + Math.round(c.pct) + "%</span></div>" +
+        (showNextUp
+          ? '<div class="topics">' + c.nextUp.map(function (n) {
+              return '<span class="topic next">' + esc(n) + "</span>";
+            }).join("") + "</div>"
+          : "") +
+        "</div>";
+    }).join("");
+  }
+
+  function maRow(showTopics) {
+    return '<div class="row">' +
+      '<div class="row-head">' +
+        '<a class="course-name" href="' + LINKS.ma + '" target="_blank" rel="noopener">' +
+          "Math Academy — " + esc(maCourse.name) + '<span aria-hidden="true" style="font-size:11px">↗</span></a>' +
+        '<div class="row-meta">' +
+          "<span>" + maCourse.xpRemaining.toLocaleString() + " XP to finish the course</span>" +
+          '<span class="grade">' + maCourse.grade + "</span>" +
+        "</div>" +
+      "</div>" +
+      '<div class="bar-line"><span class="bar">' +
+        '<span class="bar-fill ma" style="width:' + maCourse.pct + '%"></span>' +
+      '</span><span class="bar-pct">' + maCourse.pct + "%</span></div>" +
+      (showTopics
+        ? '<div class="topics">' +
+            maCourse.learning.map(function (t) { return '<span class="topic">' + esc(t) + "</span>"; }).join("") +
+            maCourse.review.map(function (t) { return '<span class="topic next">' + esc(t) + " · review</span>"; }).join("") +
+          "</div>"
+        : "") +
+      "</div>";
+  }
+
+  function sevenDay() {
+    var maxMin = Math.max.apply(null, week.map(function (d) { return Math.max(d.learn, d.phys); }));
+    return '<div class="sevenday" role="img" aria-label="Learning and training minutes over the last seven days">' +
+      week.map(function (d) {
+        return '<div class="sd-day">' +
+          '<div class="sd-bars">' +
+            '<span class="sd-bar learn" style="height:' + Math.max(2, (d.learn / maxMin) * 100) + '%" title="' + mins(d.learn) + ' learning"></span>' +
+            '<span class="sd-bar phys" style="height:' + Math.max(2, (d.phys / maxMin) * 100) + '%" title="' + mins(d.phys) + ' training"></span>' +
+          "</div>" +
+          '<span class="sd-label">' + d.date.toLocaleDateString("en-US", { weekday: "narrow" }) + "</span>" +
+        "</div>";
+      }).join("") + "</div>" +
+      '<div class="legend">' +
+        '<span><i class="swatch" style="background:var(--ring-math-academy)"></i>Learning</span>' +
+        '<span><i class="swatch" style="background:var(--green)"></i>Training</span>' +
+        "<span>Effort rated on " + ratedCount + " of the last 7 days</span>" +
+      "</div>";
+  }
+
+  function loadMeters() {
+    var scale = function (r) { return Math.max(4, Math.min(100, (r / 2) * 100)); };
+    return '<div class="meters">' +
+      '<div class="meter"><span class="meter-label">Learning</span>' +
+        '<span class="meter-track"><span class="meter-fill learn" style="width:' + scale(learnRatio) + '%"></span>' +
+        '<span class="meter-norm" title="28-day normal"></span></span>' +
+        '<span class="meter-val">' + mins(todayLoad.learn) + " · " + learnRatio + "× normal</span></div>" +
+      '<div class="meter"><span class="meter-label">Training</span>' +
+        '<span class="meter-track"><span class="meter-fill phys" style="width:' + scale(physRatio) + '%"></span>' +
+        '<span class="meter-norm" title="28-day normal"></span></span>' +
+        '<span class="meter-val">' + mins(todayLoad.phys) + " · " + physRatio + "× normal</span></div>" +
+      "</div>";
+  }
+
+
+  /* ---------- daily hours ---------- */
+
+  function clockLabel(h) {
+    var hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    var ap = hh >= 12 ? "PM" : "AM";
+    var h12 = hh % 12 === 0 ? 12 : hh % 12;
+    return h12 + (mm ? ":" + (mm < 10 ? "0" : "") + mm : "") + " " + ap;
+  }
+  function pos(h) { return ((h - TL_START) / (TL_END - TL_START)) * 100; }
+
+  function dayChips() {
+    return '<div class="day">' + dayPlan.map(function (d) {
+      var state = d.h + 1 <= NOW_H ? " done" : (d.h > NOW_H ? " now" : "");
+      return '<span class="day-chip' + state + '"><b>' + d.t + "</b>" + esc(d.what) + "</span>";
+    }).join("") + "</div>";
+  }
+
+  function hoursCard(third) {
+    var blocks = dayBlocks.map(function (b) {
+      var w = pos(b.e) - pos(b.s);
+      return '<div class="tl-block ' + b.kind + '" style="left:' + pos(b.s).toFixed(2) + "%;width:" + w.toFixed(2) +
+        '%" title="' + esc(b.label + " · " + clockLabel(b.s) + "–" + clockLabel(b.e) + (b.detail ? " · " + b.detail : "")) +
+        '">' + esc(b.label) + "</div>";
+    }).join("");
+
+    var pins = dayPins.map(function (pn) {
+      return '<span class="tl-pin" style="left:' + pos(pn.at).toFixed(2) + '%" title="' + esc(pn.label) + '"></span>';
+    }).join("");
+
+    var axis = "";
+    for (var h = TL_START; h <= TL_END; h += 2) {
+      var shift = h === TL_START ? "translateX(0)" : h === TL_END ? "translateX(-100%)" : "translateX(-50%)";
+      axis += '<span style="left:' + pos(h).toFixed(2) + "%;transform:" + shift + '">' + clockLabel(h).replace(" ", "") + "</span>";
+    }
+
+    var who = third ? "He logs" : "You log";
+    return '<div class="card">' +
+      '<div class="tl-scroll"><div class="tl-inner">' +
+        '<div class="tl">' + blocks + pins +
+          '<div class="tl-now" style="left:' + pos(NOW_H).toFixed(2) + '%"></div>' +
+        "</div>" +
+        '<div class="tl-axis">' + axis + "</div>" +
+      "</div></div>" +
+      '<div class="hours-tally">' +
+        '<div class="ht"><div class="n">4<span class="u">h 00m</span></div><div class="k">Academic block · 8–12</div></div>' +
+        '<div class="ht"><div class="n">45<span class="u">m</span></div><div class="k">Live class · Physics lab</div></div>' +
+        '<div class="ht"><div class="n">1<span class="u">h 35m</span></div><div class="k">Training</div></div>' +
+        '<div class="ht"><div class="n">45<span class="u">m</span></div><div class="k">Recovery &amp; mobility</div></div>' +
+        '<div class="ht"><div class="n">' + mins(todayLoad.learn).replace(" min", "<span class=\"u\">m</span>").replace("h ", '<span class="u">h </span>') +
+          '</div><div class="k">App-tracked focus</div></div>' +
+      "</div>" +
+      '<div style="margin-top:20px">' + dayChips() + "</div>" +
+      '<p class="hours-note">Four academic hours a day, five days a week — 20 hours, against a traditional 30. App-tracked focus counts only Math Academy and Math Facts, the two tools that report minutes; the rest of the block is ASU coursework, reading and seminar. Study hall at 6:00 is optional, and ' +
+        (third ? "he" : "you") + " still " + (third ? "needs" : "need") + " it tonight: Math Academy is 15 XP short.</p>" +
+      "</div>";
+  }
+
+  /* ---------- the year ---------- */
+
+  var YEAR_DAYS = 365;
+  var winterStart = 122, winterEnd = 140, s2Start = 140, s2End = 277;
+  var yearBands = {
+    school: [
+      { a: 0, b: 122, cls: "term", label: "Semester 1" },
+      { a: winterStart, b: winterEnd, cls: "break", label: "Winter break" },
+      { a: s2Start, b: s2End, cls: "term2", label: "Semester 2" },
+      { a: s2End, b: YEAR_DAYS, cls: "break", label: "Summer" }
+    ],
+    sport: [
+      { a: 85, b: 96, cls: "camp", label: "On-snow camp" },
+      { a: 105, b: 210, cls: "race", label: "Race season" },
+      { a: 200, b: 209, cls: "champs", label: "Champs" }
+    ]
+  };
+  var yearBreaks = [
+    { a: 97, b: 101, label: "Thanksgiving" },
+    { a: 211, b: 218, label: "Spring break" }
+  ];
+
+  function yDate(offset) { return new Date(+semStart + offset * MS_DAY); }
+  function yPos(d) { return (d / YEAR_DAYS) * 100; }
+
+  function academicDays() {
+    var n = 0;
+    for (var i = 0; i < YEAR_DAYS; i++) {
+      var inTerm = (i < 122) || (i >= s2Start && i < s2End);
+      if (!inTerm) continue;
+      var onBreak = yearBreaks.some(function (b) { return i >= b.a && i < b.b; });
+      if (onBreak) continue;
+      var dow = yDate(i).getDay();
+      if (dow === 0 || dow === 6) continue;
+      n++;
+    }
+    return n;
+  }
+
+  // Segments narrower than ~8% of the year can't hold a readable label,
+  // so they render as slivers and get named in the legend instead.
+  function bandRow(segs) {
+    return '<div class="yr-band">' + segs.map(function (g) {
+      var w = yPos(g.b) - yPos(g.a);
+      return '<div class="yr-seg ' + g.cls + '" style="left:' + yPos(g.a).toFixed(2) + "%;width:" + w.toFixed(2) +
+        '%" title="' + esc(g.label + " · " + shortDate(yDate(g.a)) + " – " + shortDate(yDate(g.b))) + '">' +
+        (w >= 8 ? esc(g.label) : "") + "</div>";
+    }).join("") +
+    '<div class="yr-now" style="left:' + yPos(DAYS_ELAPSED).toFixed(2) + '%" title="Today"></div></div>';
+  }
+
+  function span(a, b) { return shortDate(yDate(a)) + " – " + shortDate(yDate(b)); }
+
+  function renderYear() {
+    var months = "";
+    for (var m = 0; m < 12; m++) {
+      var d = new Date(semStart.getFullYear(), semStart.getMonth() + m, 1);
+      var off = Math.round((d - semStart) / MS_DAY);
+      if (off < -5 || off > YEAR_DAYS - 8) continue;
+      months += '<span style="left:' + yPos(Math.max(0, off)).toFixed(2) + '%">' +
+        d.toLocaleDateString("en-US", { month: "short" }) + "</span>";
+    }
+
+    var schoolSegs = yearBands.school.concat(yearBreaks.map(function (b) {
+      return { a: b.a, b: b.b, cls: "break", label: b.label };
+    }));
+
+    document.getElementById("panel-year").innerHTML =
+      '<div class="head"><div>' +
+        '<div class="eyebrow">Academic year ' + semStart.getFullYear() + "–" + String(yDate(YEAR_DAYS - 1).getFullYear()).slice(2) +
+          " · " + shortDate(semStart) + " – " + shortDate(yDate(YEAR_DAYS - 1)) + "</div>" +
+        "<h2>The year</h2>" +
+        '<div class="who">Two semesters, and a race season that runs straight through the seam between them.</div>' +
+      "</div>" +
+      '<div class="status green"><span class="dot"></span>Week ' + Math.ceil((DAYS_ELAPSED + 1) / 7) + " of Semester 1</div></div>" +
+
+      '<div class="section"><div class="card">' +
+        '<div class="yr-scroll"><div class="yr-inner">' +
+          '<div class="yr-months">' + months + "</div>" +
+          '<div class="yr-row-label" style="margin-top:0">School</div>' +
+          bandRow(schoolSegs) +
+          '<div class="yr-row-label">Sport</div>' +
+          bandRow(yearBands.sport) +
+        "</div></div>" +
+        '<div class="yr-legend">' +
+          '<span><i class="swatch" style="background:var(--ring-math-academy)"></i>Semester 1 · ' + span(0, 122) + "</span>" +
+          '<span><i class="swatch" style="background:#3c6df0"></i>Semester 2 · ' + span(s2Start, s2End) + "</span>" +
+          '<span><i class="swatch" style="background:var(--ring-asu)"></i>Race season · ' + span(105, 210) + "</span>" +
+          '<span><i class="swatch" style="background:var(--green)"></i>On-snow camp · ' + span(85, 96) + "</span>" +
+          '<span><i class="swatch" style="background:var(--yellow)"></i>Championships · ' + span(200, 209) + "</span>" +
+        "</div>" +
+        '<p class="hours-note" style="margin-top:12px">Breaks: Thanksgiving ' + span(97, 101) +
+          " · Winter " + span(winterStart, winterEnd) + " · Spring " + span(211, 218) +
+          " · Summer from " + shortDate(yDate(s2End)) + ".</p>" +
+        '<div class="hours-tally" style="margin-top:24px">' +
+          '<div class="ht"><div class="n">' + academicDays() + '</div><div class="k">Academic days</div></div>' +
+          '<div class="ht"><div class="n">' + Math.round(academicDays() * 4) + '<span class="u">h</span></div><div class="k">Academic hours · 4/day</div></div>' +
+          '<div class="ht"><div class="n">15<span class="u">wks</span></div><div class="k">Race season</div></div>' +
+          '<div class="ht"><div class="n">8<span class="u">wks</span></div><div class="k">Race season inside Semester 1</div></div>' +
+        "</div>" +
+      "</div></div>" +
+
+      '<div class="section"><h3 class="section-title">Why the calendar is the hard part</h3>' +
+      '<div class="explain">' +
+        '<div class="card"><h4>Four hours, every school day</h4><p>The academic block runs 8:00 to 12:00. Afternoons are training and recovery. Mastery pacing is what makes four hours enough — the block is spent on what he has not learned yet, not on re-teaching what he already knows.</p></div>' +
+        '<div class="card"><h4>A race week is not a lost week</h4><p>Coursework is asynchronous and accredited through ASU Prep, so it travels. The 9:00 check-in on Meet happens from a hotel in Minnesota the same as it does from home, and the dashboard keeps reading from the same APIs either way.</p></div>' +
+        '<div class="card"><h4>You can see December coming in October</h4><p>Race season overlaps the last eight weeks of Semester 1 — the weeks with the most assignments left. That is exactly what the pace projector in the parent view is for: it turns "is he going to be okay?" into a date.</p></div>' +
+      "</div></div>";
+  }
+
+  /* ---------- student view ---------- */
+
+  function renderStudent() {
+    var st = statusTone();
+    var rec = apps.filter(function (a) { return a.dailyGoal > 0 && a.todayXP < a.dailyGoal; })[0];
+    var remaining = rec ? rec.dailyGoal - rec.todayXP : 0;
+    var pctBehind = rec ? Math.round(100 * (1 - rec.todayXP / rec.dailyGoal)) : 0;
+
+    var insights = [
+      { sev: "warn", html: "<strong>" + esc(behindCourse.name) + "</strong> is " + Math.abs(Math.round(behindCourse.deltaDays)) +
+        " days behind pace. The blocker is <strong>" + esc(behindCourse.nextUp[0]) + "</strong>." },
+      { sev: "info", html: "You're <strong>" + pctBehind + "%</strong> short of your <strong>Math Academy</strong> goal — " + remaining + " XP left." },
+      { sev: "good", html: "Finish Math Academy and every goal today is done. Math Facts is already complete." }
+    ];
+
+    var maxXp = Math.max.apply(null, week.map(function (d) { return d.xp; }));
+
+    document.getElementById("panel-student").innerHTML =
+      '<div class="head">' +
+        '<div><div class="eyebrow">' + fmtDate(today) + " · " + clockLabel(NOW_H) + "</div>" +
+        "<h2>Today's Learning Plan</h2>" +
+        '<div class="who">' + esc(student.full) + " · Grade " + student.grade + " · " + esc(student.sport) + "</div></div>" +
+        '<div class="status ' + st.cls + '"><span class="dot"></span>' + st.label + " · " + goalsMet + " of " + scored.length + " goals met</div>" +
+      "</div>" +
+
+      '<div class="rings">' + apps.map(ring).join("") + "</div>" +
+
+      '<div class="section"><div class="card plan">' +
+        "<div>" +
+          '<div class="label">Start here</div>' +
+          "<h3>" + esc(rec.name) + " — " + esc(rec.next) + "</h3>" +
+          '<p class="why">You\'re ' + pctBehind + "% behind on " + esc(rec.name) + " today — " + remaining +
+            " XP left, about 20 focused minutes. Math Facts is done and " + esc(behindCourse.name) +
+            " is the one course that needs a block this week.</p>" +
+          '<p class="rollup"><strong>' + xpToday + " XP</strong> earned today · <strong>" + xpWeek +
+            " XP</strong> this week · across all apps</p>" +
+        "</div>" +
+        '<a class="btn" href="' + rec.link + '" target="_blank" rel="noopener">Start now <span aria-hidden="true">→</span></a>' +
+      "</div></div>" +
+
+      '<div class="section">' +
+        '<h3 class="section-title">Today\'s hours</h3>' + hoursCard(false) +
+      "</div>" +
+
+      '<div class="section">' +
+        '<h3 class="section-title">Insights</h3>' +
+        '<div class="card">' + insights.map(function (i) {
+          return '<div class="insight ' + i.sev + '">' + ICON[i.sev] + "<span>" + i.html + "</span></div>";
+        }).join("") + "</div>" +
+      "</div>" +
+
+      '<div class="section">' +
+        '<h3 class="section-title">Courses</h3>' +
+        '<div class="card"><div class="rows">' + maRow(true) + courseRows(false) + "</div>" +
+        '<div class="asof">Grades and assignment counts read from Math Academy and ASU Prep · the tick on each bar is where the semester pace says he should be today (ends ' + shortDate(semEnd) + ").</div></div>" +
+      "</div>" +
+
+      '<div class="section cols">' +
+        "<div>" +
+          '<h3 class="section-title">Load &amp; recovery</h3>' +
+          '<div class="card">' +
+            '<div class="load-head"><span class="chip yellow">Slightly elevated</span>' +
+            '<span class="load-why">Training is ' + physRatio + "× your normal month — mostly Wednesday's threshold session. Learning is steady at " + learnRatio + "×.</span></div>" +
+            loadMeters() + sevenDay() +
+            '<div class="checkin">' +
+              '<div class="checkin-title">Today\'s check-in <em id="ci-status">two taps</em></div>' +
+              '<div class="cr-row" data-cr="mind"><span class="k">Mind</span>' + crButtons("mind") + "</div>" +
+              '<div class="cr-row" data-cr="body"><span class="k">Body</span>' + crButtons("body") + "</div>" +
+            "</div>" +
+            '<div class="load-hint">Today\'s focus blocks: 25 min work · 8 min movement. Race Saturday — Friday\'s learning block moves to Thursday night.</div>' +
+          "</div>" +
+        "</div>" +
+        "<div>" +
+          '<h3 class="section-title">This week</h3>' +
+          '<div class="card">' +
+            '<div class="stats">' +
+              '<div class="stat"><div class="n">' + xpWeek.toLocaleString() + '</div><div class="k">XP this week</div></div>' +
+              '<div class="stat"><div class="n">' + daysActive + '</div><div class="k">Days active</div></div>' +
+              '<div class="stat"><div class="n">' + goalsMet + "/" + scored.length + '</div><div class="k">Goals met today</div></div>' +
+            "</div>" +
+            '<div class="week">' + week.map(function (d, i) {
+              return '<div class="week-day">' +
+                '<span class="week-val">' + d.xp + "</span>" +
+                '<span class="week-slot"><span class="week-bar' + (i === 6 ? " today" : "") + '" style="height:' + Math.max(3, (d.xp / maxXp) * 100) + '%" title="' + shortDate(d.date) + ": " + d.xp + ' XP"></span></span>' +
+                '<span class="sd-label">' + d.date.toLocaleDateString("en-US", { weekday: "narrow" }) + "</span>" +
+              "</div>";
+            }).join("") + "</div>" +
+          "</div>" +
+          '<h3 class="section-title" style="margin-top:22px">Cohort</h3>' +
+          '<div class="card lb">' +
+            lbGroup("Weekly XP", leaderboard.weekly, function (v) { return v.toLocaleString() + " XP"; }) +
+            lbGroup("Most improved", leaderboard.improved, function (v) { return "+" + v + "%"; }) +
+            lbGroup("Streaks", leaderboard.streak, function (v) { return v + " days"; }) +
+            '<div class="pb">Personal best · 1,180 XP the week of ' + shortDate(new Date(+today - 11 * MS_DAY)) + "</div>" +
+          "</div>" +
+        "</div>" +
+      "</div>";
+  }
+
+  function crButtons(which) {
+    var out = "";
+    for (var i = 1; i <= 10; i++) {
+      out += '<button type="button" class="cr" id="cr-' + which + "-" + i +
+        '" data-v="' + i + '" aria-pressed="false" aria-label="' + which + " effort " + i + ' of 10">' + i + "</button>";
+    }
+    return out;
+  }
+
+  function lbGroup(title, rows, fmt) {
+    return '<div class="lb-group"><h4>' + title + "</h4>" + rows.map(function (r) {
+      return '<div class="lb-line' + (r[0] === student.first ? " me" : "") + '"><span>' + esc(r[0]) +
+        "</span><span class=\"v\">" + fmt(r[1]) + "</span></div>";
+    }).join("") + "</div>";
+  }
+
+  /* ---------- parent view ---------- */
+
+  function renderParent() {
+    var st = statusTone();
+    var rec = apps.filter(function (a) { return a.dailyGoal > 0 && a.todayXP < a.dailyGoal; })[0];
+
+    var prompts = [
+      { cls: behindCourse.name,
+        q: "Ask what's getting in the way of " + behindCourse.nextUp[0] + ".",
+        src: behindCourse.submitted + " of " + behindCourse.total + " assignments submitted · " +
+             Math.abs(Math.round(behindCourse.deltaDays)) + " days behind semester pace" },
+      { cls: "Physics A Honors",
+        q: "Worth naming out loud: he's five days ahead in Physics.",
+        src: "16 of 67 assignments · A 94.1 · next up Unit Activity: Kinematics 2" },
+      { cls: "English 10A",
+        q: "Ask how the Professional Writing module exam went.",
+        src: "Submitted Wednesday · graded 91 · course sitting at B+ 88.4" },
+      { cls: "Math Academy",
+        q: "Ask him to explain rational expressions to you — that's what he's learning right now.",
+        src: "3 topics in the learning state today · Algebra II 61% complete" }
+    ];
+
+    document.getElementById("panel-parent").innerHTML =
+      '<div class="head">' +
+        '<div><div class="eyebrow">' + fmtDate(today) + " · " + clockLabel(NOW_H) + "</div>" +
+        "<h2>" + esc(student.first) + "'s week</h2>" +
+        '<div class="who">Parent view · read-only · Grade ' + student.grade + "</div></div>" +
+        '<div class="status ' + st.cls + '"><span class="dot"></span>' + st.label + " today</div>" +
+      "</div>" +
+
+      '<div class="section"><div class="card plan">' +
+        "<div>" +
+          '<div class="label">What he should do next</div>' +
+          "<h3>" + esc(rec.name) + " — " + esc(rec.next) + "</h3>" +
+          '<p class="why">' + (rec.dailyGoal - rec.todayXP) + " XP left on today's math goal, about 20 minutes. Math Facts is already done. " +
+            esc(behindCourse.name) + " is the course that needs a block this week.</p>" +
+          '<p class="rollup"><strong>' + xpToday + " XP</strong> today · <strong>" + xpWeek + " XP</strong> this week · <strong>" +
+            mins(todayLoad.learn) + "</strong> focused</p>" +
+        "</div>" +
+        '<a class="btn ghost" href="' + rec.link + '" target="_blank" rel="noopener">Open ' + esc(rec.name) + "</a>" +
+      "</div></div>" +
+
+      '<div class="section">' +
+        '<h3 class="section-title">His hours today</h3>' + hoursCard(true) +
+      "</div>" +
+
+      '<div class="section cols">' +
+        "<div>" +
+          '<h3 class="section-title">Talk with ' + esc(student.first) + " about</h3>" +
+          '<div class="card">' + prompts.map(function (p) {
+            return '<div class="prompt"><div class="cls">' + esc(p.cls) + "</div>" +
+              '<div class="q">' + esc(p.q) + "</div>" +
+              '<div class="src">' + esc(p.src) + "</div></div>";
+          }).join("") + "</div>" +
+        "</div>" +
+        "<div>" +
+          '<h3 class="section-title">Load &amp; recovery</h3>' +
+          '<div class="card">' +
+            '<div class="load-head"><span class="chip yellow">Slightly elevated</span>' +
+            '<span class="load-why">Training is ' + physRatio + "× his normal month. Learning is steady. Nothing here predicts injury — it describes the week he's actually having.</span></div>" +
+            loadMeters() + sevenDay() +
+            '<div class="load-hint">Race Saturday. Friday\'s learning block moves to Thursday night so the taper holds.</div>' +
+          "</div>" +
+        "</div>" +
+      "</div>" +
+
+      '<div class="section">' +
+        '<h3 class="section-title">Courses</h3>' +
+        '<div class="card"><div class="rows">' + maRow(false) + courseRows(true) + "</div>" +
+        '<div class="asof">Grey chips are the next assignments in each course. Course names open Canvas.</div></div>' +
+      "</div>" +
+
+      '<div class="section">' +
+        '<h3 class="section-title">Pace projector</h3>' +
+        '<details class="proj" id="proj" open>' +
+          "<summary>Will he finish by " + shortDate(semEnd) + "? <span class=\"hint\">Drag a rate to test it</span></summary>" +
+          '<div class="proj-body" id="proj-body"></div>' +
+        "</details>" +
+      "</div>";
+
+    renderProjector();
+  }
+
+  /* ---------- pace projector ---------- */
+
+  function renderProjector() {
+    var rows = courses.map(function (c) {
+      var def = Math.max(1, Math.round(c.perWeek * 10) / 10);
+      return '<div class="proj-row">' +
+        '<div class="nm">' + esc(c.name) + "<small>" + (c.total - c.submitted) + " assignments left</small></div>" +
+        '<div class="proj-ctl">' +
+          '<input type="range" id="rate-' + c.id + '" data-course="' + c.id + '" min="1" max="12" step="0.5" value="' + def + '" aria-label="' + esc(c.name) + ' assignments per week">' +
+          '<span class="rate" id="rate-lbl-' + c.id + '">' + def.toFixed(1) + "/week</span>" +
+        "</div>" +
+        '<div class="proj-out" id="out-' + c.id + '"></div>' +
+      "</div>";
+    }).join("");
+
+    var maDef = Math.round(apps[0].weeklyXP / 7);
+    rows += '<div class="proj-row">' +
+      '<div class="nm">Math Academy — ' + esc(maCourse.name) + "<small>" + maCourse.xpRemaining.toLocaleString() + " XP left</small></div>" +
+      '<div class="proj-ctl">' +
+        '<input type="range" id="rate-ma" data-course="ma" min="10" max="90" step="1" value="' + maDef + '" aria-label="Math Academy XP per day">' +
+        '<span class="rate" id="rate-lbl-ma">' + maDef + " XP/day</span>" +
+      "</div>" +
+      '<div class="proj-out" id="out-ma"></div>' +
+    "</div>";
+
+    document.getElementById("proj-body").innerHTML = rows +
+      '<p class="proj-note">Each slider starts at his own observed rate since ' + shortDate(semStart) +
+      ", so the opening number is a fact, not a guess. Straight-line math on purpose — it does not quietly subtract race weekends or holidays, so you can sanity-check it yourself.</p>";
+
+    var inputs = document.querySelectorAll("#proj-body input[type=range]");
+    Array.prototype.forEach.call(inputs, function (el) {
+      el.addEventListener("input", function () { projectOne(el); });
+      projectOne(el);
+    });
+  }
+
+  function projectOne(el) {
+    var key = el.getAttribute("data-course");
+    var v = parseFloat(el.value);
+    var days, label;
+
+    if (key === "ma") {
+      days = Math.ceil(maCourse.xpRemaining / v);
+      document.getElementById("rate-lbl-ma").textContent = Math.round(v) + " XP/day";
+      label = "out-ma";
+    } else {
+      var c = courses.filter(function (x) { return x.id === key; })[0];
+      days = Math.ceil(((c.total - c.submitted) / v) * 7);
+      document.getElementById("rate-lbl-" + key).textContent = v.toFixed(1) + "/week";
+      label = "out-" + key;
+    }
+
+    var finish = new Date(+today + days * MS_DAY);
+    var gap = Math.round((finish - semEnd) / MS_DAY);
+    var chip = gap <= -7 ? '<span class="chip green">' + Math.round(-gap / 7) + " wks early</span>"
+      : gap <= 3 ? '<span class="chip green">Makes it</span>'
+      : gap <= 21 ? '<span class="chip yellow">' + gap + " days late</span>"
+      : '<span class="chip red">' + Math.round(gap / 7) + " wks late</span>";
+
+    document.getElementById(label).innerHTML =
+      '<span class="d">' + shortDate(finish) + "</span> " + chip;
+  }
+
+  /* ---------- check-in ---------- */
+
+  var checkin = { mind: null, body: null };
+  function wireCheckin() {
+    document.querySelectorAll(".cr-row").forEach(function (row) {
+      var which = row.getAttribute("data-cr");
+      row.querySelectorAll(".cr").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          row.querySelectorAll(".cr").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+          btn.setAttribute("aria-pressed", "true");
+          checkin[which] = parseInt(btn.getAttribute("data-v"), 10);
+          var s = document.getElementById("ci-status");
+          if (checkin.mind !== null && checkin.body !== null) {
+            s.textContent = "saved ✓ · mind " + checkin.mind + " · body " + checkin.body;
+            s.className = "done";
+          } else {
+            s.textContent = "one more tap";
+            s.className = "";
+          }
+        });
+      });
+    });
+  }
+
+  /* ---------- tabs ---------- */
+
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute("aria-selected", on ? "true" : "false");
+        document.getElementById("panel-" + t.getAttribute("data-view")).hidden = !on;
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  renderStudent();
+  renderParent();
+  renderYear();
+  wireCheckin();
+})();
+</script>
+
+</body>
+</html>
